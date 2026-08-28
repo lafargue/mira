@@ -1,0 +1,142 @@
+@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0c0d10;
+  --color-surface: #16171c;
+  --color-surface-2: #1c1d24;
+  --color-fg: #ecece8;
+  --color-muted: #8d8e96;
+  --color-subtle: #6a6b73;
+  --color-border: #2a2b32;
+  --color-accent: #d4d8d4;
+  --color-accent-fg: #0c0d10;
+  --color-danger: #c45c5c;
+  --color-tile-a: #e25c6a;
+  --color-tile-b: #2aa78e;
+  --color-tile-c: #5b84c7;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-pop: cubic-bezier(0.34, 1.36, 0.64, 1);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100dvh;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+.tile-shape {
+  background: color-mix(in oklab, white 28%, transparent);
+}
+
+.board-shake {
+  animation: mira-shake 280ms var(--ease-out);
+}
+
+@keyframes mira-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3px, 1px);
+  }
+  48% {
+    transform: translate(3px, -2px);
+  }
+  76% {
+    transform: translate(-2px, 1px);
+  }
+}
+
+@keyframes mira-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+
+@keyframes mira-in {
+  from {
+    transform: translateY(-18%) scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes mira-banner {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.tile-pop {
+  animation: mira-pop 220ms var(--ease-out) forwards;
+}
+
+.tile-spawn {
+  animation: mira-in 280ms var(--ease-out) both;
+}
+
+.combo-banner {
+  animation: mira-banner 250ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-shake,
+  .tile-pop,
+  .tile-spawn,
+  .combo-banner {
+    animation: none;
+  }
+
+  .tile-pop {
+    opacity: 0;
+  }
+}
