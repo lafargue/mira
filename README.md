@@ -1,26 +1,19 @@
 # MIRA
 
-Puzzle de un toque. El color corre en cruz hasta un muro. El muro evoluciona. Cuatro del mismo color estallan solas: eso es una **Mira**.
+Juego de puzzle para móvil. Toca un color, se come en cruz, el muro evoluciona.
+
+- **Diario** — 12 pulsos, el mismo tablero para todo el mundo. Comparte la cuadrícula y reta a un amigo.
+- **Sin fin** — una barra de pulso. Si se llena, se acabó.
+- **Ranking** — entra con Google o X para subir tu marca.
 
 ## Cómo se juega
 
-1. Toca una ficha. Su color resuena arriba, abajo, izquierda y derecha hasta chocar con otro.
-2. Ese muro cambia al siguiente color.
-3. Cuatro o más seguidas se cosechan solas y encadenan.
-4. El diario son **12 pulsos**, el mismo tablero para todo el mundo. Sin fin es una barra de pulso: si se llena, se acabó.
+Hay tres colores: rosa, verde y azul.
 
-## Ranking y amigos
+1. **Toca una ficha.** Desaparecen esa y todas las del mismo color en cruz (arriba, abajo, izquierda, derecha) hasta chocar con otro color.
+2. **El muro cambia.** La ficha que paró la cruz evoluciona al siguiente color: rosa → verde → azul → rosa.
+3. **Caen fichas nuevas.** Si quedan cuatro o más iguales en línea, estallan solas. Eso es una Mira y vale más.
 
-- Entra con Google o X para subir tu marca al ranking global.
-- Al terminar el diario, **Retar a un amigo** copia una cuadrícula (como Wordle) y el enlace. Quien abra el enlace juega el mismo tablero de hoy.
-
-Jugar es gratis. El ranking pide cuenta para que la marca sea tuya.
-
-## Local
-
-```bash
-npm install
-npm run dev
-```
+Diario: 12 toques, máxima puntuación. Sin fin: los toques flojos llenan la barra.
 
 Hecho con Grok.

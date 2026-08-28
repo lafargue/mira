@@ -124,15 +124,27 @@
   animation: mira-in 280ms var(--ease-out) both;
 }
 
-.combo-banner {
-  animation: mira-banner 250ms var(--ease-out) both;
+.tile-hint {
+  animation: mira-hint 1.8s var(--ease-out) infinite;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-accent) 70%, transparent);
+}
+
+@keyframes mira-hint {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .board-shake,
   .tile-pop,
   .tile-spawn,
-  .combo-banner {
+  .combo-banner,
+  .tile-hint {
     animation: none;
   }
 

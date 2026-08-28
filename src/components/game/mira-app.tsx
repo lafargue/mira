@@ -13,12 +13,13 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BoardView, ColorLegend } from "@/components/game/board";
+import { BoardView, ColorLegend, HelpDiagram } from "@/components/game/board";
 import { AuthChip } from "@/components/game/auth-chip";
 import { Ranking } from "@/components/game/ranking";
 import {
   DAILY_MOVES,
   PRESSURE_MAX,
+  SIZE,
   applyPulse,
   createGame,
   previewHarvest,
@@ -120,6 +121,10 @@ export function MiraApp() {
   const persist = useCallback((patch: Partial<Stats>) => {
     setStats((s) => ({ ...s, ...patch }));
   }, []);
+
+  useEffect(() => {
+    if (game && game.moves >= 3 && !stats.seenHowTo) persist({ seenHowTo: true });
+  }, [game, persist, stats.seenHowTo]);
 
   const start = useCallback(
     (mode: Mode) => {
@@ -345,6 +350,12 @@ export function MiraApp() {
             setShareMsg(res === "copied" ? "Copiado" : res === "shared" ? "Hecho" : "No se pudo compartir");
             setTimeout(() => setShareMsg(null), 1600);
           }}
+          hint={
+            !stats.seenHowTo && game.moves === 0 && !preview && !busy && !game.over
+              ? bestTap(game.board)
+              : null
+          }
+          coach={coachLine(stats.seenHowTo, game)}
           onMute={() => {
             const next = !stats.muted;
             persist({ muted: next });
@@ -403,7 +414,16 @@ function Menu({
         <div className="flex flex-col items-center gap-3 text-center">
           <p className="text-xs font-medium tracking-[0.22em] text-muted uppercase">Mira #{dailyN}</p>
           <h1 className="font-display text-6xl font-medium tracking-[-0.04em] text-fg">MIRA</h1>
-          <p className="max-w-[16rem] text-sm leading-snug text-muted">Toca. Resuena. Evoluciona.</p>
+          <p className="max-w-[18rem] text-sm leading-snug text-muted">
+            Toca un color. Se come en cruz hasta chocar con otro.
+          </p>
+          <button
+            type="button"
+            onClick={onHelp}
+            className="text-sm text-muted underline-offset-4 hover:text-fg hover:underline"
+          >
+            Cómo se juega
+          </button>
         </div>
         <ColorLegend />
         <div className="flex w-full max-w-xs flex-col gap-3">
@@ -459,6 +479,8 @@ function Play({
   onCancel,
   onShare,
   onMute,
+  hint,
+  coach,
 }: {
   game: GameState;
   stats: Stats;
@@ -479,6 +501,8 @@ function Play({
   onCancel: () => void;
   onShare: () => void;
   onMute: () => void;
+  hint: Pos | null;
+  coach: string | null;
 }) {
   const remaining = DAILY_MOVES - game.moves;
   return (
@@ -522,6 +546,7 @@ function Play({
           spawnIds={spawning}
           shake={shake}
           locked={busy || game.over}
+          hint={hint}
           onCellDown={onCellDown}
           onCellUp={onCellUp}
           onCancel={onCancel}
@@ -547,7 +572,9 @@ function Play({
           onBack={onBack}
         />
       ) : (
-        <p className="mt-auto text-center text-xs text-subtle">Mantén para ver la cruz. Suelta para pulsar.</p>
+        <p className="mt-auto text-center text-sm leading-relaxed text-muted">
+          {coach ?? "Mantén pulsado para ver la cruz. Suelta para jugar."}
+        </p>
       )}
     </div>
   );
@@ -703,30 +730,67 @@ function Help({ onClose }: { onClose: () => void }) {
           <X className="size-5" />
         </button>
       </header>
-      <ol className="mt-6 flex flex-col gap-5 text-sm leading-relaxed text-muted">
-        <li>
-          <span className="block font-medium text-fg">Toca una ficha.</span>
-          Su color corre en cruz — arriba, abajo, a los lados — hasta chocar con otro color.
-        </li>
-        <li>
-          <span className="block font-medium text-fg">El muro evoluciona.</span>
-          La ficha que detuvo el pulso cambia al siguiente color. Estás plantando la jugada siguiente.
-        </li>
-        <li>
-          <span className="block font-medium text-fg">Cuatro seguidas estallan.</span>
-          Si tras la caída se alinean cuatro o más, caen solas. Eso es una Mira.
-        </li>
-        <li>
-          <span className="block font-medium text-fg">Diario, ranking y amigos.</span>
-          Doce pulsos, el mismo tablero para todo el mundo. Comparte tu cuadrícula para retar a un amigo. Entra para subir tu marca al ranking.
-        </li>
-      </ol>
-      <div className="mt-8">
+
+      <div className="mt-5 flex flex-col gap-6 pb-4">
+        <HelpDiagram />
+
+        <ol className="flex flex-col gap-5 text-sm leading-relaxed text-muted">
+          <li>
+            <span className="block font-medium text-fg">1. Toca una ficha</span>
+            Desaparecen esa y todas las del mismo color en cruz: arriba, abajo, izquierda y derecha. El pulso para al chocar con otro color.
+          </li>
+          <li>
+            <span className="block font-medium text-fg">2. El muro cambia de color</span>
+            La ficha que paró la cruz (anillo suave) evoluciona: rosa → verde → azul → rosa. Estás preparando el siguiente toque.
+          </li>
+          <li>
+            <span className="block font-medium text-fg">3. Caen y pueden estallar</span>
+            Los huecos se rellenan desde arriba. Si quedan cuatro o más iguales en línea, estallan solas. Eso es una Mira y vale más.
+          </li>
+          <li>
+            <span className="block font-medium text-fg">4. Diario o sin fin</span>
+            Diario: 12 toques, el mismo tablero para todo el mundo. Sin fin: cada toque flojo llena la barra; si se llena, se acabó.
+          </li>
+        </ol>
+
         <ColorLegend />
       </div>
-      <Button className="mt-auto w-full rounded-xl" onClick={onClose}>
-        Entendido
-      </Button>
+
+      <div className="sticky bottom-0 mt-auto bg-bg pt-3">
+        <Button className="w-full rounded-xl" onClick={onClose}>
+          Jugar
+        </Button>
+      </div>
     </div>
   );
+}
+
+function bestTap(board: GameState["board"]): Pos {
+  let best: Pos = { r: 0, c: 0 };
+  let bestN = 0;
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      if (!board[r][c]) continue;
+      const n = previewHarvest(board, r, c).harvested.length;
+      if (n > bestN) {
+        best = { r, c };
+        bestN = n;
+      }
+    }
+  }
+  return best;
+}
+
+function coachLine(seenHowTo: boolean, game: GameState): string | null {
+  if (seenHowTo || game.over) return null;
+  if (game.moves === 0) {
+    return "Toca la ficha que late. Se comen las del mismo color en cruz.";
+  }
+  if (game.moves === 1) {
+    return "El muro (anillo suave) acaba de cambiar de color. Úsalo en el siguiente toque.";
+  }
+  if (game.moves === 2) {
+    return "Si caen cuatro iguales en línea, estallan solas. Eso vale más.";
+  }
+  return null;
 }

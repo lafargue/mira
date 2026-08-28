@@ -7,6 +7,12 @@ const TILE_BG: Record<Color, string> = {
   2: "bg-tile-c",
 };
 
+const COLOR_NAME: Record<Color, string> = {
+  0: "Rosa",
+  1: "Verde",
+  2: "Azul",
+};
+
 function Shape({ color }: { color: Color }) {
   if (color === 0) {
     return <span className="tile-shape size-[46%] rounded-full" />;
@@ -24,6 +30,7 @@ type BoardViewProps = {
   spawnIds?: Set<number>;
   shake?: boolean;
   locked?: boolean;
+  hint?: Pos | null;
   onCellDown: (r: number, c: number) => void;
   onCellUp: (r: number, c: number) => void;
   onCancel: () => void;
@@ -36,6 +43,7 @@ export function BoardView({
   spawnIds,
   shake,
   locked,
+  hint,
   onCellDown,
   onCellUp,
   onCancel,
@@ -65,6 +73,7 @@ export function BoardView({
             const isWall = wallSet.has(key);
             const popping = tile ? poppingIds?.has(tile.id) : false;
             const spawning = tile ? spawnIds?.has(tile.id) : false;
+            const isHint = Boolean(hint && hint.r === r && hint.c === c && !preview);
             return (
               <button
                 key={tile ? `t-${tile.id}` : `e-${r}-${c}`}
@@ -72,13 +81,14 @@ export function BoardView({
                 data-r={r}
                 data-c={c}
                 disabled={locked || !tile}
-                aria-label={tile ? `Ficha ${r + 1}, ${c + 1}` : undefined}
+                aria-label={tile ? `Ficha ${COLOR_NAME[tile.color]} ${r + 1}, ${c + 1}` : undefined}
                 className={cn(
                   "relative min-h-11 min-w-11 overflow-hidden rounded-lg transition-[transform,box-shadow,opacity] duration-150 ease-out",
                   tile ? TILE_BG[tile.color] : "bg-surface-2",
                   isHarvest && "ring-2 ring-accent scale-[1.04] z-10",
                   isWall && "ring-2 ring-fg/40",
                   onCross && !isHarvest && !isWall && "brightness-110",
+                  isHint && "tile-hint z-10",
                   popping && "tile-pop pointer-events-none",
                   spawning && "tile-spawn",
                 )}
@@ -89,7 +99,11 @@ export function BoardView({
                 }}
                 onPointerUp={() => onCellUp(r, c)}
               >
-                {tile ? <span className="flex size-full items-center justify-center"><Shape color={tile.color} /></span> : null}
+                {tile ? (
+                  <span className="flex size-full items-center justify-center">
+                    <Shape color={tile.color} />
+                  </span>
+                ) : null}
               </button>
             );
           }),
@@ -101,12 +115,61 @@ export function BoardView({
 
 export function ColorLegend() {
   return (
-    <div className="flex items-center justify-center gap-4 text-subtle">
+    <div className="flex items-center justify-center gap-4">
       {([0, 1, 2] as Color[]).map((c) => (
-        <span key={c} className={cn("flex size-6 items-center justify-center rounded-md", TILE_BG[c])}>
-          <Shape color={c} />
+        <span key={c} className="flex items-center gap-1.5 text-xs text-muted">
+          <span className={cn("flex size-6 items-center justify-center rounded-md", TILE_BG[c])}>
+            <Shape color={c} />
+          </span>
+          {COLOR_NAME[c]}
         </span>
       ))}
+    </div>
+  );
+}
+
+type DemoCell = { color: Color; role: "tap" | "eat" | "wall" } | null;
+
+const DEMO: DemoCell[][] = [
+  [null, null, { color: 0, role: "eat" }, null, null],
+  [
+    { color: 1, role: "wall" },
+    { color: 0, role: "eat" },
+    { color: 0, role: "tap" },
+    { color: 0, role: "eat" },
+    { color: 1, role: "wall" },
+  ],
+  [null, null, { color: 0, role: "eat" }, null, null],
+];
+
+export function HelpDiagram() {
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-4">
+      <div
+        className="mx-auto grid w-full max-w-[14rem] gap-1.5"
+        style={{ gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}
+        aria-hidden="true"
+      >
+        {DEMO.flatMap((row, r) =>
+          row.map((cell, c) => (
+            <span
+              key={`${r}-${c}`}
+              className={cn(
+                "flex aspect-square items-center justify-center rounded-md",
+                cell ? TILE_BG[cell.color] : "bg-surface-2",
+                cell?.role === "tap" && "ring-2 ring-accent",
+                cell?.role === "eat" && "ring-2 ring-accent/50",
+                cell?.role === "wall" && "ring-2 ring-fg/40",
+              )}
+            >
+              {cell ? <Shape color={cell.color} /> : null}
+            </span>
+          )),
+        )}
+      </div>
+      <p className="mt-3 text-center text-xs leading-relaxed text-muted">
+        Tocas el rosa del centro. Se van los rosas de la cruz. Los verdes (el muro) cambian a azul.
+      </p>
     </div>
   );
 }
