@@ -73,6 +73,7 @@ export function MiraApp() {
     today: null,
     muted: false,
     seenHowTo: false,
+    seenTutorial: false,
   }));
   const [hydrated, setHydrated] = useState(false);
   const [game, setGame] = useState<GameState | null>(null);
@@ -90,6 +91,8 @@ export function MiraApp() {
   const [floatScore, setFloatScore] = useState<string | null>(null);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
   const [glyphs, setGlyphs] = useState<number[]>([]);
+  const [tutorial, setTutorial] = useState(false);
+  const [nudge, setNudge] = useState(false);
   const dateKey = utcDateKey();
   const cancelRef = useRef(false);
   const previewRef = useRef(preview);
@@ -122,10 +125,6 @@ export function MiraApp() {
     setStats((s) => ({ ...s, ...patch }));
   }, []);
 
-  useEffect(() => {
-    if (game && game.moves >= 3 && !stats.seenHowTo) persist({ seenHowTo: true });
-  }, [game, persist, stats.seenHowTo]);
-
   const start = useCallback(
     (mode: Mode) => {
       unlockAudio();
@@ -140,9 +139,12 @@ export function MiraApp() {
       setSpawning(new Set());
       setPreview(null);
       setBusy(false);
+      const first = !stats.seenTutorial;
+      setTutorial(first);
+      setNudge(first);
       setScreen("play");
     },
-    [dateKey],
+    [dateKey, stats.seenTutorial],
   );
 
   const finishGame = useCallback(
@@ -305,7 +307,7 @@ export function MiraApp() {
       {screen === "help" ? (
         <Help
           onClose={() => {
-            persist({ seenHowTo: true });
+            persist({ seenHowTo: true, seenTutorial: true });
             setScreen("menu");
           }}
         />
@@ -313,7 +315,22 @@ export function MiraApp() {
 
       {screen === "ranking" ? <Ranking onClose={() => setScreen("menu")} /> : null}
 
-      {screen === "play" && game ? (
+      {screen === "play" && game && tutorial ? (
+        <Tutorial
+          onBack={() => {
+            setTutorial(false);
+            setNudge(false);
+            setGame(null);
+            setScreen("menu");
+          }}
+          onPlay={() => {
+            persist({ seenHowTo: true, seenTutorial: true });
+            setTutorial(false);
+          }}
+        />
+      ) : null}
+
+      {screen === "play" && game && !tutorial ? (
         <Play
           game={game}
           stats={stats}
@@ -350,12 +367,8 @@ export function MiraApp() {
             setShareMsg(res === "copied" ? "Copiado" : res === "shared" ? "Hecho" : "No se pudo compartir");
             setTimeout(() => setShareMsg(null), 1600);
           }}
-          hint={
-            !stats.seenHowTo && game.moves === 0 && !preview && !busy && !game.over
-              ? bestTap(game.board)
-              : null
-          }
-          coach={coachLine(stats.seenHowTo, game)}
+          hint={nudge && game.moves === 0 && !preview && !busy && !game.over ? bestTap(game.board) : null}
+          coach={nudge && game.moves === 0 && !game.over ? "Toca la ficha que late. Se comen las del mismo color en cruz." : null}
           onMute={() => {
             const next = !stats.muted;
             persist({ muted: next });
@@ -781,16 +794,43 @@ function bestTap(board: GameState["board"]): Pos {
   return best;
 }
 
-function coachLine(seenHowTo: boolean, game: GameState): string | null {
-  if (seenHowTo || game.over) return null;
-  if (game.moves === 0) {
-    return "Toca la ficha que late. Se comen las del mismo color en cruz.";
-  }
-  if (game.moves === 1) {
-    return "El muro (anillo suave) acaba de cambiar de color. Úsalo en el siguiente toque.";
-  }
-  if (game.moves === 2) {
-    return "Si caen cuatro iguales en línea, estallan solas. Eso vale más.";
-  }
-  return null;
+function Tutorial({ onBack, onPlay }: { onBack: () => void; onPlay: () => void }) {
+  return (
+    <div className="flex flex-1 flex-col" data-testid="mira-tutorial">
+      <header className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex size-11 items-center justify-center rounded-lg text-muted transition-colors duration-150 hover:text-fg"
+          aria-label="Volver"
+        >
+          <ArrowLeft className="size-5" strokeWidth={1.75} />
+        </button>
+        <h2 className="font-display text-2xl tracking-tight">La cruz</h2>
+      </header>
+
+      <p className="mt-2 text-sm text-muted">Tres cosas. Luego tocas.</p>
+
+      <div className="mt-5">
+        <HelpDiagram />
+      </div>
+
+      <ol className="mt-6 flex flex-col gap-4 text-sm leading-relaxed text-muted">
+        <li>
+          <span className="font-medium text-fg">Toca un color.</span> Se come en cruz hasta chocar con otro.
+        </li>
+        <li>
+          <span className="font-medium text-fg">El muro cambia.</span> Rosa → verde → azul → rosa.
+        </li>
+        <li>
+          <span className="font-medium text-fg">Cuatro en línea</span> estallan solas. Eso vale más.
+        </li>
+      </ol>
+
+      <Button className="mt-auto w-full rounded-xl" onClick={onPlay}>
+        Tocar
+      </Button>
+    </div>
+  );
 }
+

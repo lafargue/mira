@@ -19,6 +19,7 @@ export type Stats = {
   today: DailyRecord | null;
   muted: boolean;
   seenHowTo: boolean;
+  seenTutorial: boolean;
 };
 
 const DEFAULTS: Stats = {
@@ -32,6 +33,7 @@ const DEFAULTS: Stats = {
   today: null,
   muted: false,
   seenHowTo: false,
+  seenTutorial: false,
 };
 
 function canStore(): boolean {

@@ -173,6 +173,7 @@ describe("daily identity + share", () => {
       today: null,
       muted: false,
       seenHowTo: true,
+      seenTutorial: true,
     };
     assert.equal(streakAfterPlay(base, "2026-08-28"), 5);
     assert.equal(streakAfterPlay(base, "2026-08-29"), 1);
