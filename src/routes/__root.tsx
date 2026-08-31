@@ -1,7 +1,10 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { restorePreviewSession } from "@/lib/session-persist";
 import appCss from "../styles.css?url";
+
+restorePreviewSession();
 
 const APP_NAME = "MIRA";
 

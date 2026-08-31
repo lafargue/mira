@@ -3,40 +3,60 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { listBoard, type BoardPayload } from "@/lib/game/scores";
+import { listBoard, submitScore, type BoardPayload } from "@/lib/game/scores";
 import { utcDateKey } from "@/lib/game/rng";
+import { loadStats } from "@/lib/game/save";
 import { cn } from "@/lib/utils";
 
 export function Ranking({ onClose }: { onClose: () => void }) {
   const { user, isPending } = useCurrentUserState();
   const [tab, setTab] = useState<"daily" | "endless">("daily");
   const [board, setBoard] = useState<BoardPayload | null>(null);
-  const [error, setError] = useState<"auth" | "load" | null>(null);
+  const [error, setError] = useState<"load" | null>(null);
   const dateKey = utcDateKey();
+  const local = loadStats();
+  const localScore = tab === "daily" ? (local.today?.score ?? 0) : local.bestEndless;
 
   useEffect(() => {
     if (isPending) return;
-    if (!user) {
-      setError("auth");
-      setBoard(null);
-      return;
-    }
     let cancelled = false;
     setBoard(null);
     setError(null);
-    void listBoard({ data: { mode: tab, dateKey } })
-      .then((payload) => {
+
+    const run = async () => {
+      if (user) {
+        try {
+          if (tab === "daily" && local.today?.played && local.today.score > 0) {
+            await submitScore({
+              data: {
+                mode: "daily",
+                score: local.today.score,
+                dateKey,
+                glyphs: local.today.glyphs ?? [],
+              },
+            });
+          }
+          if (tab === "endless" && local.bestEndless > 0) {
+            await submitScore({
+              data: { mode: "endless", score: local.bestEndless, dateKey: "", glyphs: [] },
+            });
+          }
+        } catch {
+          /* still list the board */
+        }
+      }
+      try {
+        const payload = await listBoard({ data: { mode: tab, dateKey } });
         if (!cancelled) setBoard(payload);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        const msg = err instanceof Error ? err.message : "";
-        setError(msg === "Unauthorized" ? "auth" : "load");
-      });
+      } catch {
+        if (!cancelled) setError("load");
+      }
+    };
+    void run();
     return () => {
       cancelled = true;
     };
-  }, [user, isPending, tab, dateKey]);
+  }, [user, isPending, tab, dateKey, local.today?.played, local.today?.score, local.bestEndless]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -75,17 +95,6 @@ export function Ranking({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {error === "auth" || (!isPending && !user) ? (
-        <div className="mt-8 flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <p className="max-w-[16rem] text-sm leading-relaxed text-muted">
-            Entra para ver el ranking de hoy y subir tu marca. El diario es el mismo para todo el mundo.
-          </p>
-          <Button asChild className="rounded-xl">
-            <Link to="/login">Entrar</Link>
-          </Button>
-        </div>
-      ) : null}
-
       {error === "load" ? (
         <p className="mt-8 text-center text-sm text-muted">No se pudo cargar el ranking.</p>
       ) : null}
@@ -99,8 +108,14 @@ export function Ranking({ onClose }: { onClose: () => void }) {
                 <span className="tabular-nums"> · {board.myScore.toLocaleString("es")} pts</span>
               ) : null}
             </p>
-          ) : (
+          ) : user ? (
             <p className="text-center text-sm text-muted">Juega una partida y sube tu marca.</p>
+          ) : localScore > 0 ? (
+            <p className="text-center text-sm text-muted">
+              Tu marca local: <span className="tabular-nums text-fg">{localScore.toLocaleString("es")} pts</span>
+            </p>
+          ) : (
+            <p className="text-center text-sm text-muted">El diario es el mismo para todo el mundo.</p>
           )}
           {board.rows.length === 0 ? (
             <p className="mt-8 text-center text-sm text-subtle">Nadie ha subido una marca todavía.</p>
@@ -127,11 +142,19 @@ export function Ranking({ onClose }: { onClose: () => void }) {
         </div>
       ) : null}
 
-      {isPending || (user && !board && !error) ? (
+      {isPending || (!board && !error) ? (
         <div className="mt-8 space-y-2" aria-hidden="true">
           {Array.from({ length: 5 }, (_, i) => (
             <div key={i} className="h-12 animate-pulse rounded-xl bg-surface" />
           ))}
+        </div>
+      ) : null}
+
+      {!isPending && !user ? (
+        <div className="mt-auto pt-6">
+          <Button asChild className="w-full rounded-xl">
+            <Link to="/login">Entra para subir tu marca</Link>
+          </Button>
         </div>
       ) : null}
     </div>

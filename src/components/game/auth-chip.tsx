@@ -1,11 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { useState } from "react";
+import { clearPersistedSession, hasPreviewToken } from "@/lib/session-persist";
+import { useEffect, useState } from "react";
 
 export function AuthChip() {
   const { user, isPending } = useCurrentUserState();
   const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    if (isPending || user) return;
+    if (hasPreviewToken()) clearPersistedSession();
+  }, [isPending, user]);
 
   if (isPending) {
     return <div className="h-11 w-20 animate-pulse rounded-lg bg-surface" />;

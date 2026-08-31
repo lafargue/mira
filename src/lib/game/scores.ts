@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createMiddleware, createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
@@ -21,6 +21,18 @@ function publicHandle(userId: string): string {
   const n = Math.abs(h).toString(36).slice(0, 4).toUpperCase();
   return `Mira-${n}`;
 }
+
+/** Forward the preview bearer if present; do not require a session (public ranking). */
+const optionalSession = createMiddleware({ type: "function" })
+  .client(async ({ next }) => {
+    const { getBearerToken } = await import("@/lib/auth/client");
+    return next({ sendContext: { bearerToken: getBearerToken() ?? undefined } });
+  })
+  .server(async ({ next, context }) => {
+    const { getSessionUser } = await import("@/lib/auth/verify.server");
+    const user = await getSessionUser(context.bearerToken);
+    return next({ context: { userId: user?.id ?? null } });
+  });
 
 const submitInput = z.object({
   mode: z.enum(["daily", "endless"]),
@@ -63,23 +75,27 @@ const boardInput = z.object({
 });
 
 export const listBoard = createServerFn({ method: "GET" })
-  .middleware([authMiddleware])
+  .middleware([optionalSession])
   .validator((raw: unknown) => boardInput.parse(raw))
   .handler(async ({ context, data }): Promise<BoardPayload> => {
     const dateKey = data.mode === "daily" ? data.dateKey : "";
+    const userId = context.userId;
     const sql = await getSql();
-    const mine = await sql<{ score: number }>`
-      select score from mira_scores
-      where user_id = ${context.userId} and mode = ${data.mode} and date_key = ${dateKey}
-    `;
-    const myScore = mine[0]?.score ?? null;
+    let myScore: number | null = null;
     let myRank: number | null = null;
-    if (myScore !== null) {
-      const rankRows = await sql<{ rank: number }>`
-        select count(*)::int + 1 as rank from mira_scores
-        where mode = ${data.mode} and date_key = ${dateKey} and score > ${myScore}
+    if (userId) {
+      const mine = await sql<{ score: number }>`
+        select score from mira_scores
+        where user_id = ${userId} and mode = ${data.mode} and date_key = ${dateKey}
       `;
-      myRank = rankRows[0]?.rank ?? 1;
+      myScore = mine[0]?.score ?? null;
+      if (myScore !== null) {
+        const rankRows = await sql<{ rank: number }>`
+          select count(*)::int + 1 as rank from mira_scores
+          where mode = ${data.mode} and date_key = ${dateKey} and score > ${myScore}
+        `;
+        myRank = rankRows[0]?.rank ?? 1;
+      }
     }
     const top = await sql<{ user_id: string; handle: string; score: number }>`
       select user_id, handle, score from mira_scores
@@ -91,7 +107,7 @@ export const listBoard = createServerFn({ method: "GET" })
       rows: top.map((r) => ({
         handle: r.handle,
         score: r.score,
-        isYou: r.user_id === context.userId,
+        isYou: Boolean(userId) && r.user_id === userId,
       })),
       myScore,
       myRank,
