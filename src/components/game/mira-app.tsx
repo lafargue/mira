@@ -46,6 +46,9 @@ import {
   unlockAudio,
 } from "@/lib/game/audio";
 import { cn } from "@/lib/utils";
+import { restorePreviewSession } from "@/lib/session-persist";
+
+restorePreviewSession();
 
 type Screen = "menu" | "play" | "help" | "ranking";
 

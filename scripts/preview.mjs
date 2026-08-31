@@ -296,6 +296,16 @@ async function restart() {
   if (!(await stop())) return 1;
 
   mkdirSync(dirname(LOG_FILE), { recursive: true });
+  // Nitro bundles PGLite's JS but not pglite.data / pglite.wasm; the preview
+  // (no DATABASE_URL) needs those files next to electric-sql__pglite.mjs.
+  const pgliteDest = join(ROOT, ".vercel/output/functions/__server.func/_libs");
+  const pgliteSrc = join(ROOT, "node_modules/@electric-sql/pglite/dist");
+  if (existsSync(pgliteDest) && existsSync(pgliteSrc)) {
+    for (const name of ["pglite.data", "pglite.wasm"]) {
+      const src = join(pgliteSrc, name);
+      if (existsSync(src)) writeFileSync(join(pgliteDest, name), readFileSync(src));
+    }
+  }
   const log = openSync(LOG_FILE, "a");
   const child = spawn("npm", ["run", "preview"], {
     cwd: ROOT,

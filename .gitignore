@@ -8,6 +8,7 @@ dist/
 .grok/
 screenshots/
 artifacts/
+.data/
 *.log
 .env
 .env.*

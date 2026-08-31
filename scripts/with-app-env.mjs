@@ -20,7 +20,8 @@
  * `process.env`, which is why the merge has to happen before Vite starts.
  */
 import { spawn } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { constants as osConstants } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -63,6 +64,33 @@ export function readAppEnv(root) {
 /** File values under the process environment: an explicit override wins. */
 export function mergeAppEnv(appEnv, processEnv) {
   return { ...appEnv, ...processEnv };
+}
+
+const PREVIEW_SECRET_REL = join(".data", "better-auth-secret");
+
+/**
+ * Preview-only: persist a session signing secret so Better Auth can verify
+ * bearers after a process restart. Skips when the platform already set
+ * BETTER_AUTH_SECRET or DATABASE_URL (deployed apps). Never a `.env` file.
+ */
+export function withPreviewAuthSecret(root, env) {
+  const next = { ...env };
+  if (typeof next.DATABASE_URL === "string" && next.DATABASE_URL.trim()) return next;
+  if (typeof next.BETTER_AUTH_SECRET === "string" && next.BETTER_AUTH_SECRET.trim()) {
+    return next;
+  }
+  const file = join(root, PREVIEW_SECRET_REL);
+  try {
+    mkdirSync(dirname(file), { recursive: true });
+    if (!existsSync(file)) {
+      writeFileSync(file, randomBytes(32).toString("hex"), { mode: 0o600 });
+    }
+    const secret = readFileSync(file, "utf8").trim();
+    if (secret) next.BETTER_AUTH_SECRET = secret;
+  } catch {
+    /* preview still works with Better Auth's process-random fallback */
+  }
+  return next;
 }
 
 /**
@@ -110,7 +138,10 @@ function main(argv) {
     console.error("usage: node scripts/with-app-env.mjs <command> [args…]");
     process.exit(2);
   }
-  const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
+  const env = withPreviewAuthSecret(
+    projectRoot(),
+    mergeAppEnv(readAppEnv(projectRoot()), process.env),
+  );
   const child = spawn(command, args, { stdio: "inherit", env });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {

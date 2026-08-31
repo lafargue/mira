@@ -11,11 +11,12 @@ import {
   parseAppEnv,
   projectRoot,
   readAppEnv,
+  withPreviewAuthSecret,
 } from "./with-app-env.mjs";
 
 const execFileAsync = promisify(execFile);
 const WRAPPER = join(projectRoot(), "scripts/with-app-env.mjs");
-const PRINT_FLAG = "process.stdout.write(String(process.env.VITE_AUTH_ENABLED));";
+const PRINT_FLAG = "process.stdout.write(String(process.env.VITE_AUTH_ENABLED ?? ''));";
 
 function makeWorkspace(appEnvJson) {
   const root = mkdtempSync(join(tmpdir(), "app-env-"));
@@ -59,8 +60,32 @@ test("an explicit process-env override wins over the file", () => {
   assert.equal(merged.PATH, "/usr/bin");
 });
 
-test("the template ships auth off", () => {
-  assert.deepEqual(readAppEnv(projectRoot()), { VITE_AUTH_ENABLED: "false" });
+test("preview auth secret is created once and reused", () => {
+  const root = makeWorkspace();
+  const first = withPreviewAuthSecret(root, { PATH: "/usr/bin" });
+  assert.equal(typeof first.BETTER_AUTH_SECRET, "string");
+  assert.ok(first.BETTER_AUTH_SECRET.length >= 32);
+  const second = withPreviewAuthSecret(root, { PATH: "/usr/bin" });
+  assert.equal(second.BETTER_AUTH_SECRET, first.BETTER_AUTH_SECRET);
+});
+
+test("preview auth secret does not override a real deploy", () => {
+  const root = makeWorkspace();
+  const deployed = withPreviewAuthSecret(root, {
+    DATABASE_URL: "postgres://x",
+    PATH: "/usr/bin",
+  });
+  assert.equal(deployed.BETTER_AUTH_SECRET, undefined);
+  const explicit = withPreviewAuthSecret(root, {
+    BETTER_AUTH_SECRET: "already-set",
+    PATH: "/usr/bin",
+  });
+  assert.equal(explicit.BETTER_AUTH_SECRET, "already-set");
+});
+
+
+test("this app has sign-in on (no VITE_AUTH_ENABLED override)", () => {
+  assert.deepEqual(readAppEnv(projectRoot()), {});
 });
 
 test("vite loadEnv resolves the wrapped value", () => {
@@ -80,7 +105,7 @@ test("the wrapped command runs with the app env applied", async () => {
     "-e",
     PRINT_FLAG,
   ]);
-  assert.equal(stdout, "false");
+  assert.equal(stdout, "");
 });
 
 test("the wrapped command sees an explicit override, not the file value", async () => {
@@ -124,5 +149,5 @@ test("the CLI still runs when invoked through a symlinked path", async () => {
     "-e",
     PRINT_FLAG,
   ]);
-  assert.equal(stdout, "false");
+  assert.equal(stdout, "");
 });

@@ -17,7 +17,7 @@ export type BoardPayload = {
 
 function publicHandle(userId: string): string {
   let h = 0;
-  for (let i = 0; i < userId.length; i++) h = Math.imul(31, h) + userId.charCodeAt(i) | 0;
+  for (let i = 0; i < userId.length; i++) h = (Math.imul(31, h) + userId.charCodeAt(i)) | 0;
   const n = Math.abs(h).toString(36).slice(0, 4).toUpperCase();
   return `Mira-${n}`;
 }
@@ -29,9 +29,15 @@ const optionalSession = createMiddleware({ type: "function" })
     return next({ sendContext: { bearerToken: getBearerToken() ?? undefined } });
   })
   .server(async ({ next, context }) => {
-    const { getSessionUser } = await import("@/lib/auth/verify.server");
-    const user = await getSessionUser(context.bearerToken);
-    return next({ context: { userId: user?.id ?? null } });
+    let userId: string | null = null;
+    try {
+      const { getSessionUser } = await import("@/lib/auth/verify.server");
+      const user = await getSessionUser(context.bearerToken);
+      userId = user?.id ?? null;
+    } catch {
+      userId = null;
+    }
+    return next({ context: { userId } });
   });
 
 const submitInput = z.object({
@@ -74,7 +80,7 @@ const boardInput = z.object({
   dateKey: z.string().max(16),
 });
 
-export const listBoard = createServerFn({ method: "GET" })
+export const listBoard = createServerFn({ method: "POST" })
   .middleware([optionalSession])
   .validator((raw: unknown) => boardInput.parse(raw))
   .handler(async ({ context, data }): Promise<BoardPayload> => {

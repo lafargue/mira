@@ -22,6 +22,7 @@ import {
 import { dailyNumber, dailySeed, hashString, makeRng, utcDateKey } from "./rng.ts";
 import { renderGlyphRow } from "./share.ts";
 import { streakAfterPlay, type Stats } from "./save.ts";
+import { visibleBoard } from "./ranking-view.ts";
 
 function tile(id: number, color: 0 | 1 | 2): Tile {
   return { id, color };
@@ -199,5 +200,29 @@ describe("balance sanity", () => {
     assert.ok(avg >= 4, `avg moves ${avg} too short`);
     assert.ok(avg <= 35, `avg moves ${avg} too long`);
     assert.equal(COLOR_COUNT, 3);
+  });
+});
+
+describe("ranking view", () => {
+  it("inserts a local score so the board is never blank", () => {
+    const rows = visibleBoard(
+      [
+        { handle: "Mira-AAAA", score: 200, isYou: false },
+        { handle: "Mira-BBBB", score: 50, isYou: false },
+      ],
+      120,
+      false,
+    );
+    assert.equal(rows.length, 3);
+    assert.equal(rows[1]?.handle, "Tú");
+    assert.equal(rows[1]?.rank, 2);
+    assert.equal(rows[1]?.pending, true);
+    assert.equal(rows[1]?.isYou, true);
+  });
+
+  it("does not duplicate when the server already marked isYou", () => {
+    const rows = visibleBoard([{ handle: "Mira-XXXX", score: 80, isYou: true }], 80, true);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.pending, false);
   });
 });
