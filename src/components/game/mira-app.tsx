@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BoardView, ColorLegend, HelpDiagram } from "@/components/game/board";
+import { BoardView, ColorLegend, ComboGuide, HelpDiagram } from "@/components/game/board";
 import { AuthChip } from "@/components/game/auth-chip";
 import { Ranking } from "@/components/game/ranking";
 import {
@@ -98,6 +98,7 @@ export function MiraApp() {
   const [nudge, setNudge] = useState(false);
   const dateKey = utcDateKey();
   const cancelRef = useRef(false);
+  const bannerGen = useRef(0);
   const previewRef = useRef(preview);
   previewRef.current = preview;
 
@@ -205,8 +206,9 @@ export function MiraApp() {
         await pause(90);
         setPopping(new Set(result.harvested.map((h) => h.id)));
         playHarvest(result.harvested.length, result.cascades.length > 0);
+        const gen = ++bannerGen.current;
         setBanner(result.comboName);
-        setFloatScore(`+${result.scoreDelta}`);
+        setFloatScore(`+${result.scoreDelta.toLocaleString("es")} pts`);
         if (result.harvested.length >= 5 || result.cascades.length) {
           setShake(true);
           setTimeout(() => setShake(false), 300);
@@ -253,10 +255,13 @@ export function MiraApp() {
         const nextGlyphs = [...glyphs, pulseGlyph(result)];
         setGlyphs(nextGlyphs);
         setGame(next);
-        setBanner(null);
-        setFloatScore(null);
         setBusy(false);
         if (next.over) finishGame(next, nextGlyphs);
+        await pause(fast ? 80 : 720);
+        if (bannerGen.current === gen) {
+          setBanner(null);
+          setFloatScore(null);
+        }
       } catch {
         setBusy(false);
         setPreview(null);
@@ -568,11 +573,13 @@ function Play({
           onCancel={onCancel}
         />
         {banner ? (
-          <div className="combo-banner pointer-events-none absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center">
-            <p className="rounded-lg bg-bg/80 px-4 py-1.5 font-display text-3xl tracking-tight text-fg">
-              {banner}
-            </p>
-            {floatScore ? <p className="mt-1 text-sm tabular-nums text-accent">{floatScore}</p> : null}
+          <div className="combo-banner pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-bg/70 p-4">
+            <div className="rounded-xl border border-border bg-bg px-5 py-3 text-center">
+              <p className="font-display text-3xl tracking-tight text-fg">{banner}</p>
+              {floatScore ? (
+                <p className="mt-1 text-sm font-medium tabular-nums text-fg">{floatScore}</p>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </div>
@@ -647,7 +654,7 @@ function ResultCard({
   return (
     <section className="mt-auto rounded-2xl border border-border bg-surface p-4">
       <p className="text-[0.65rem] font-medium tracking-[0.18em] text-muted uppercase">
-        {game.mode === "daily" ? "Cielo de hoy" : "Se acabó el pulso"}
+        {game.mode === "daily" ? "Resultado de hoy" : "Fin de la partida"}
       </p>
       <div className="mt-2 flex items-end justify-between gap-3">
         <p className="font-display text-4xl tabular-nums tracking-tight">{game.score.toLocaleString("es")}</p>
@@ -761,13 +768,15 @@ function Help({ onClose }: { onClose: () => void }) {
           </li>
           <li>
             <span className="block font-medium text-fg">3. Caen y pueden estallar</span>
-            Los huecos se rellenan desde arriba. Si quedan cuatro o más iguales en línea, estallan solas. Eso es una Mira y vale más.
+            Los huecos se rellenan desde arriba. Si quedan cuatro o más iguales en línea, estallan solas. Eso es una Mira y vale el doble.
           </li>
           <li>
             <span className="block font-medium text-fg">4. Diario o sin fin</span>
             Diario: 12 toques, el mismo tablero para todo el mundo. Sin fin: cada toque flojo llena la barra; si se llena, se acabó.
           </li>
         </ol>
+
+        <ComboGuide />
 
         <ColorLegend />
       </div>
@@ -809,30 +818,32 @@ function Tutorial({ onBack, onPlay }: { onBack: () => void; onPlay: () => void }
         >
           <ArrowLeft className="size-5" strokeWidth={1.75} />
         </button>
-        <h2 className="font-display text-2xl tracking-tight">La cruz</h2>
+        <h2 className="font-display text-2xl tracking-tight">Cómo se juega</h2>
       </header>
 
-      <p className="mt-2 text-sm text-muted">Tres cosas. Luego tocas.</p>
-
-      <div className="mt-5">
+      <div className="mt-5 flex flex-col gap-6 pb-4">
         <HelpDiagram />
+
+        <ol className="flex flex-col gap-4 text-sm leading-relaxed text-muted">
+          <li>
+            <span className="font-medium text-fg">Toca un color.</span> Se come en cruz hasta chocar con otro.
+          </li>
+          <li>
+            <span className="font-medium text-fg">El muro cambia.</span> Rosa → verde → azul → rosa.
+          </li>
+          <li>
+            <span className="font-medium text-fg">Cuatro en línea</span> estallan solas. Eso es una Mira y duplica.
+          </li>
+        </ol>
+
+        <ComboGuide />
       </div>
 
-      <ol className="mt-6 flex flex-col gap-4 text-sm leading-relaxed text-muted">
-        <li>
-          <span className="font-medium text-fg">Toca un color.</span> Se come en cruz hasta chocar con otro.
-        </li>
-        <li>
-          <span className="font-medium text-fg">El muro cambia.</span> Rosa → verde → azul → rosa.
-        </li>
-        <li>
-          <span className="font-medium text-fg">Cuatro en línea</span> estallan solas. Eso vale más.
-        </li>
-      </ol>
-
-      <Button className="mt-auto w-full rounded-xl" onClick={onPlay}>
-        Tocar
-      </Button>
+      <div className="sticky bottom-0 mt-auto bg-bg pt-3">
+        <Button className="w-full rounded-xl" onClick={onPlay}>
+          Tocar
+        </Button>
+      </div>
     </div>
   );
 }

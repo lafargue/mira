@@ -129,6 +129,10 @@
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-accent) 70%, transparent);
 }
 
+.combo-banner {
+  animation: mira-banner 180ms var(--ease-out) both;
+}
+
 @keyframes mira-hint {
   0%,
   100% {

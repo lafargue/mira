@@ -19,6 +19,7 @@ import {
   type Board,
   type Tile,
 } from "./engine.ts";
+import { COMBO_GUIDE } from "./combos.ts";
 import { dailyNumber, dailySeed, hashString, makeRng, utcDateKey } from "./rng.ts";
 import { renderGlyphRow } from "./share.ts";
 import { streakAfterPlay, type Stats } from "./save.ts";
@@ -75,6 +76,17 @@ describe("core rules", () => {
     assert.equal(comboName(1, 1), "Pulso");
     assert.equal(comboName(4, 1), "Halo");
     assert.equal(comboName(3, 2), "Mira");
+  });
+
+  it("combo guide covers every named play and lists points", () => {
+    const names = new Set(COMBO_GUIDE.map((c) => c.name));
+    for (let n = 1; n <= 10; n++) {
+      assert.ok(names.has(comboName(n, 1)), `missing ${comboName(n, 1)} for n=${n}`);
+    }
+    assert.ok(names.has(comboName(4, 2)));
+    assert.equal(COMBO_GUIDE[0]?.pts, "10");
+    assert.equal(COMBO_GUIDE[2]?.pts, "90");
+    assert.match(COMBO_GUIDE[6]?.pts ?? "", /320/);
   });
 
   it("pressure punishes duds and rewards big harvests", () => {

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { SIZE, type Board, type Color, type Harvested, type Pos } from "@/lib/game/engine";
+import { COMBO_GUIDE } from "@/lib/game/combos";
 
 const TILE_BG: Record<Color, string> = {
   0: "bg-tile-a",
@@ -170,6 +171,26 @@ export function HelpDiagram() {
       <p className="mt-3 text-center text-xs leading-relaxed text-muted">
         Tocas el rosa del centro. Se van los rosas de la cruz. Los verdes (el muro) cambian a azul.
       </p>
+    </div>
+  );
+}
+
+export function ComboGuide() {
+  return (
+    <div>
+      <h3 className="font-medium text-fg">Las jugadas</h3>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        Los puntos son fichas × fichas × 10. Si al caer quedan cuatro o más iguales en línea, estallan solas: eso es una Mira y duplica.
+      </p>
+      <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-surface">
+        {COMBO_GUIDE.map((c) => (
+          <li key={c.name} className="flex items-baseline gap-3 px-4 py-2.5 text-sm">
+            <span className="w-20 shrink-0 font-medium text-fg">{c.name}</span>
+            <span className="min-w-0 flex-1 text-muted">{c.how}</span>
+            <span className="shrink-0 tabular-nums text-fg">{c.pts}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
