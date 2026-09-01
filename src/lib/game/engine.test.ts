@@ -75,6 +75,8 @@ describe("core rules", () => {
     assert.equal(harvestScore(4, 2), 320);
     assert.equal(comboName(1, 1), "Pulso");
     assert.equal(comboName(4, 1), "Halo");
+    assert.equal(comboName(5, 1), "Iris");
+    assert.equal(comboName(7, 1), "Iris");
     assert.equal(comboName(3, 2), "Mira");
   });
 
@@ -84,9 +86,23 @@ describe("core rules", () => {
       assert.ok(names.has(comboName(n, 1)), `missing ${comboName(n, 1)} for n=${n}`);
     }
     assert.ok(names.has(comboName(4, 2)));
-    assert.equal(COMBO_GUIDE[0]?.pts, "10");
-    assert.equal(COMBO_GUIDE[2]?.pts, "90");
-    assert.match(COMBO_GUIDE[6]?.pts ?? "", /320/);
+    assert.equal(COMBO_GUIDE.find((c) => c.name === "Iris")?.pts, "250");
+    assert.ok(!names.has("Nova"));
+    assert.match(COMBO_GUIDE.find((c) => c.name === "Mira")?.pts ?? "", /320/);
+  });
+
+  it("a settled board cannot host a 6+ cross tap", () => {
+    for (let seed = 1; seed <= 80; seed++) {
+      const game = createGame("endless", seed * 17);
+      assert.equal(findCascadeRuns(game.board).length, 0);
+      let max = 0;
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          max = Math.max(max, harvestFrom(game.board, r, c).harvested.length);
+        }
+      }
+      assert.ok(max <= 5, `seed ${seed} max harvest ${max}`);
+    }
   });
 
   it("pressure punishes duds and rewards big harvests", () => {

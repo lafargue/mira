@@ -70,7 +70,8 @@ export function nextColor(c: Color): Color {
 
 export function comboName(n: number, chain: number): string {
   if (chain > 1) return "Mira";
-  if (n >= 7) return "Nova";
+  // Stable boards never have 4-in-a-line (that would already be a Mira),
+  // so a cross tap is at most 3+3−1 = 5.
   if (n >= 5) return "Iris";
   if (n >= 4) return "Halo";
   if (n >= 3) return "Acorde";
