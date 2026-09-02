@@ -1,7 +1,9 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
+import { PrefsProvider } from "@/lib/prefs-context";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { PREVIEW_RESTORE_SCRIPT, restorePreviewSession } from "@/lib/session-persist";
+import { THEME_BOOT_SCRIPT } from "@/lib/prefs";
 import appCss from "../styles.css?url";
 
 restorePreviewSession();
@@ -30,13 +32,16 @@ export const Route = createRootRoute({
   component: () => (
     <html lang="es" className="antialiased" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: PREVIEW_RESTORE_SCRIPT }} />
         <HeadContent />
       </head>
       <body className="font-sans bg-bg text-fg">
         <PreviewHostBridge />
         <AuthProvider>
-          <Outlet />
+          <PrefsProvider>
+            <Outlet />
+          </PrefsProvider>
         </AuthProvider>
         <Scripts />
       </body>
