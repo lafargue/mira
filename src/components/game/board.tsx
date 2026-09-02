@@ -211,7 +211,7 @@ export function GlyphLegend({ compact = false }: { compact?: boolean }) {
     <div>
       <h3 className="font-medium text-fg">Los signos del diario</h3>
       <p className="mt-1 text-sm leading-relaxed text-muted">
-        Al terminar ves 12 signos: un pulso cada uno, de izquierda a derecha. Más lleno, mejor toque.
+        Al terminar ves 12 signos: un pulso cada uno, de izquierda a derecha. El cuadrado hueco es el toque más flojo; el rombo es una Mira.
       </p>
       <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-surface">
         {GLYPH_GUIDE.map((g) => (
