@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { SIZE, type Board, type Color, type Harvested, type Pos } from "@/lib/game/engine";
 import { COMBO_GUIDE } from "@/lib/game/combos";
+import { GLYPH_GUIDE } from "@/lib/game/share";
 
 const TILE_BG: Record<Color, string> = {
   0: "bg-tile-a",
@@ -188,6 +189,36 @@ export function ComboGuide() {
             <span className="w-20 shrink-0 font-medium text-fg">{c.name}</span>
             <span className="min-w-0 flex-1 text-muted">{c.how}</span>
             <span className="shrink-0 tabular-nums text-fg">{c.pts}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function GlyphLegend({ compact = false }: { compact?: boolean }) {
+  if (compact) {
+    return (
+      <div className="mt-2 text-center text-xs leading-relaxed text-muted">
+        <p>Cada signo es un pulso, de izquierda a derecha.</p>
+        <p className="mt-1 text-subtle">
+          {GLYPH_GUIDE.map((g) => `${g.glyph} ${g.short}`).join(" · ")}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <h3 className="font-medium text-fg">Los signos del diario</h3>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        Al terminar ves 12 signos: un pulso cada uno, de izquierda a derecha. Más lleno, mejor toque.
+      </p>
+      <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-surface">
+        {GLYPH_GUIDE.map((g) => (
+          <li key={g.glyph} className="flex items-baseline gap-3 px-4 py-2.5 text-sm">
+            <span className="w-6 shrink-0 text-center text-fg">{g.glyph}</span>
+            <span className="w-32 shrink-0 font-medium text-fg">{g.name}</span>
+            <span className="min-w-0 flex-1 text-muted">{g.how}</span>
           </li>
         ))}
       </ul>

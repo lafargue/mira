@@ -21,9 +21,9 @@ import {
 } from "./engine.ts";
 import { COMBO_GUIDE } from "./combos.ts";
 import { dailyNumber, dailySeed, hashString, makeRng, utcDateKey } from "./rng.ts";
-import { renderGlyphRow } from "./share.ts";
+import { GLYPH_GUIDE, glyphChar, renderGlyphGrid, renderGlyphRow } from "./share.ts";
 import { streakAfterPlay, type Stats } from "./save.ts";
-import { visibleBoard } from "./ranking-view.ts";
+import { displayHandle, fallbackHandle, visibleBoard } from "./ranking-view.ts";
 
 function tile(id: number, color: 0 | 1 | 2): Tile {
   return { id, color };
@@ -187,7 +187,18 @@ describe("daily identity + share", () => {
     const lines = text.split("\n");
     assert.equal(lines.length, 2);
     assert.equal([...lines[0]!].length, 6);
-    assert.equal(pulseGlyph({ harvested: [{ r: 0, c: 0, id: 1, color: 0 }], cascades: [{ harvested: [], falls: [], spawns: [], chain: 2, score: 10 }] } as never), 4);
+    assert.equal(glyphChar(0), "■");
+    assert.equal(glyphChar(4), "♦");
+    assert.equal(renderGlyphGrid([0, 4]).includes(" "), true);
+    assert.equal(GLYPH_GUIDE.length, 5);
+    assert.equal(GLYPH_GUIDE[4]?.name, "Mira");
+    assert.equal(
+      pulseGlyph({
+        harvested: [{ r: 0, c: 0, id: 1, color: 0 }],
+        cascades: [{ harvested: [], falls: [], spawns: [], chain: 2, score: 10 }],
+      } as never),
+      4,
+    );
   });
 
   it("keeps a streak only across consecutive UTC days", () => {
@@ -252,5 +263,11 @@ describe("ranking view", () => {
     const rows = visibleBoard([{ handle: "Mira-XXXX", score: 80, isYou: true }], 80, true);
     assert.equal(rows.length, 1);
     assert.equal(rows[0]?.pending, false);
+  });
+
+  it("prefers the account name on the board", () => {
+    assert.equal(displayHandle("Ana López", "user-1"), "Ana López");
+    assert.equal(displayHandle("   ", "abc", "Mira-OLD"), "Mira-OLD");
+    assert.match(fallbackHandle("abc"), /^Mira-/);
   });
 });

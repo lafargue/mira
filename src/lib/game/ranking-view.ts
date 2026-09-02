@@ -12,6 +12,25 @@ export type VisibleRow = {
   pending: boolean;
 };
 
+export function fallbackHandle(userId: string): string {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (Math.imul(31, h) + userId.charCodeAt(i)) | 0;
+  const n = Math.abs(h).toString(36).slice(0, 4).toUpperCase();
+  return `Mira-${n}`;
+}
+
+/** Prefer the account name; else the stored handle; else a stable Mira-XXXX code. */
+export function displayHandle(
+  name: string | null | undefined,
+  userId: string,
+  stored = "",
+): string {
+  const n = (name ?? "").trim().replace(/\s+/g, " ");
+  if (n) return n.length > 24 ? `${n.slice(0, 23)}…` : n;
+  if (stored.trim()) return stored.trim();
+  return fallbackHandle(userId);
+}
+
 /** Merge a local (unpublished) score into the public board so the list is never blank. */
 export function visibleBoard(
   rows: BoardRow[],

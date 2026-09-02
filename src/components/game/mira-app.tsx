@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BoardView, ColorLegend, ComboGuide, HelpDiagram } from "@/components/game/board";
+import { BoardView, ColorLegend, ComboGuide, GlyphLegend, HelpDiagram } from "@/components/game/board";
 import { AuthChip } from "@/components/game/auth-chip";
 import { Ranking } from "@/components/game/ranking";
 import {
@@ -33,7 +33,7 @@ import {
 } from "@/lib/game/engine";
 import { dailyNumber, dailySeed, utcDateKey } from "@/lib/game/rng";
 import { loadStats, saveStats, streakAfterPlay, type Stats } from "@/lib/game/save";
-import { shareOrCopy, shareText } from "@/lib/game/share";
+import { renderGlyphGrid, shareOrCopy, shareText } from "@/lib/game/share";
 import { submitScore } from "@/lib/game/scores";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
@@ -666,7 +666,10 @@ function ResultCard({
         ) : null}
       </div>
       {game.mode === "daily" && shownGlyphs.length ? (
-        <pre className="mt-3 text-center text-lg leading-7 tracking-[0.2em]">{shareRows(shownGlyphs)}</pre>
+        <>
+          <pre className="mt-3 text-center text-lg leading-7 tracking-[0.2em]">{renderGlyphGrid(shownGlyphs)}</pre>
+          <GlyphLegend compact />
+        </>
       ) : null}
       <div className="mt-4 flex flex-col gap-2">
         {game.mode === "daily" ? (
@@ -719,7 +722,7 @@ function ScorePost({ game, glyphs }: { game: GameState; glyphs: number[] }) {
   if (!user) {
     return (
       <Button asChild variant="secondary" className="w-full rounded-xl">
-        <Link to="/login">Entra y sube tu marca</Link>
+        <Link to="/login">Entra con tu cuenta para que te vean</Link>
       </Button>
     );
   }
@@ -731,12 +734,6 @@ function ScorePost({ game, glyphs }: { game: GameState; glyphs: number[] }) {
     return <p className="text-center text-xs text-muted">No se pudo subir la marca</p>;
   }
   return <p className="text-center text-xs text-subtle">Subiendo marca…</p>;
-}
-
-function shareRows(glyphs: number[]) {
-  const map = ["■", "□", "▬", "▪", "◆"];
-  const cells = glyphs.map((g) => map[Math.max(0, Math.min(4, g))] ?? "■");
-  return `${cells.slice(0, 6).join(" ")}\n${cells.slice(6, 12).join(" ")}`;
 }
 
 function Help({ onClose }: { onClose: () => void }) {
@@ -777,6 +774,8 @@ function Help({ onClose }: { onClose: () => void }) {
         </ol>
 
         <ComboGuide />
+
+        <GlyphLegend />
 
         <ColorLegend />
       </div>

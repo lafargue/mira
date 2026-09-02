@@ -2,6 +2,7 @@ import { createMiddleware, createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { displayHandle } from "@/lib/game/ranking-view";
 
 export type BoardRow = {
   handle: string;
@@ -13,14 +14,8 @@ export type BoardPayload = {
   rows: BoardRow[];
   myScore: number | null;
   myRank: number | null;
+  total: number;
 };
-
-function publicHandle(userId: string): string {
-  let h = 0;
-  for (let i = 0; i < userId.length; i++) h = (Math.imul(31, h) + userId.charCodeAt(i)) | 0;
-  const n = Math.abs(h).toString(36).slice(0, 4).toUpperCase();
-  return `Mira-${n}`;
-}
 
 /** Forward the preview bearer if present; do not require a session (public ranking). */
 const optionalSession = createMiddleware({ type: "function" })
@@ -47,6 +42,14 @@ const submitInput = z.object({
   glyphs: z.array(z.number().int().min(0).max(4)).max(12),
 });
 
+async function handleFor(userId: string): Promise<string> {
+  const sql = await getSql();
+  const rows = await sql<{ name: string | null }>`
+    select "name" as name from "user" where id = ${userId} limit 1
+  `;
+  return displayHandle(rows[0]?.name, userId);
+}
+
 export const submitScore = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((raw: unknown) => submitInput.parse(raw))
@@ -55,7 +58,7 @@ export const submitScore = createServerFn({ method: "POST" })
     if (data.mode === "daily" && !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
       return { ok: false as const, score: 0 };
     }
-    const handle = publicHandle(context.userId);
+    const handle = await handleFor(context.userId);
     const glyphs = JSON.stringify(data.glyphs);
     const sql = await getSql();
     await sql`
@@ -103,19 +106,27 @@ export const listBoard = createServerFn({ method: "POST" })
         myRank = rankRows[0]?.rank ?? 1;
       }
     }
-    const top = await sql<{ user_id: string; handle: string; score: number }>`
-      select user_id, handle, score from mira_scores
+    const counted = await sql<{ n: number }>`
+      select count(*)::int as n from mira_scores
       where mode = ${data.mode} and date_key = ${dateKey}
-      order by score desc, updated_at asc
+    `;
+    const total = counted[0]?.n ?? 0;
+    const top = await sql<{ user_id: string; handle: string; score: number; user_name: string | null }>`
+      select s.user_id, s.handle, s.score, u."name" as user_name
+      from mira_scores s
+      left join "user" u on u.id = s.user_id
+      where s.mode = ${data.mode} and s.date_key = ${dateKey}
+      order by s.score desc, s.updated_at asc
       limit 20
     `;
     return {
       rows: top.map((r) => ({
-        handle: r.handle,
+        handle: displayHandle(r.user_name, r.user_id, r.handle),
         score: r.score,
         isYou: Boolean(userId) && r.user_id === userId,
       })),
       myScore,
       myRank,
+      total,
     };
   });

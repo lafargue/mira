@@ -1,12 +1,39 @@
 import { DAILY_MOVES } from "./engine.ts";
 import { dailyNumber } from "./rng.ts";
 
-const GLYPHS = ["⬛", "⬜", "🟦", "🟩", "🟪"] as const;
+/** Intensity 0–4. Geometric, not emoji: they render on Android and match the share text. */
+export const PULSE_GLYPHS = ["■", "□", "●", "▲", "♦"] as const;
+
+export type GlyphGuide = {
+  glyph: string;
+  name: string;
+  short: string;
+  how: string;
+};
+
+export const GLYPH_GUIDE: GlyphGuide[] = [
+  { glyph: "■", name: "Pulso", short: "Pulso", how: "Una ficha." },
+  { glyph: "□", name: "Eco", short: "Eco", how: "Dos en cruz." },
+  { glyph: "●", name: "Acorde o Halo", short: "3 o 4", how: "Tres o cuatro." },
+  { glyph: "▲", name: "Iris", short: "Iris", how: "Cinco. El toque más gordo." },
+  { glyph: "♦", name: "Mira", short: "Mira", how: "Estallido al caer." },
+];
+
+export function glyphChar(n: number): string {
+  return PULSE_GLYPHS[Math.max(0, Math.min(4, n))] ?? "■";
+}
 
 export function renderGlyphRow(glyphs: number[]): string {
-  const cells = glyphs.slice(0, DAILY_MOVES).map((g) => GLYPHS[Math.max(0, Math.min(4, g))] ?? "⬛");
+  const cells = glyphs.slice(0, DAILY_MOVES).map(glyphChar);
   const a = cells.slice(0, 6).join("");
   const b = cells.slice(6, 12).join("");
+  return b ? `${a}\n${b}` : a;
+}
+
+export function renderGlyphGrid(glyphs: number[]): string {
+  const cells = glyphs.slice(0, DAILY_MOVES).map(glyphChar);
+  const a = cells.slice(0, 6).join(" ");
+  const b = cells.slice(6, 12).join(" ");
   return b ? `${a}\n${b}` : a;
 }
 

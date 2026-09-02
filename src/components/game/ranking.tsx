@@ -114,6 +114,7 @@ export function Ranking({ onClose }: { onClose: () => void }) {
       {board?.myRank ? (
         <p className="mt-5 text-center text-sm text-muted">
           Tu puesto: <span className="tabular-nums text-fg">#{board.myRank}</span>
+          {board.total > 1 ? <span className="tabular-nums"> de {board.total}</span> : null}
           {board.myScore !== null ? (
             <span className="tabular-nums"> · {board.myScore.toLocaleString("es")} pts</span>
           ) : null}
@@ -121,10 +122,12 @@ export function Ranking({ onClose }: { onClose: () => void }) {
       ) : localScore > 0 ? (
         <p className="mt-5 text-center text-sm text-muted">
           Tu marca: <span className="tabular-nums text-fg">{localScore.toLocaleString("es")} pts</span>
-          {!user ? <span> · entra para publicarla</span> : null}
+          {!user ? <span> · entra con tu cuenta para publicarla</span> : null}
         </p>
       ) : (
-        <p className="mt-5 text-center text-sm text-muted">El diario es el mismo para todo el mundo.</p>
+        <p className="mt-5 text-center text-sm text-muted">
+          {tab === "daily" ? "El diario de hoy. Hay que entrar con tu cuenta para aparecer." : "La mejor marca de cada cuenta."}
+        </p>
       )}
 
       {error === "load" && rows.length === 0 ? (
@@ -132,28 +135,37 @@ export function Ranking({ onClose }: { onClose: () => void }) {
       ) : null}
 
       {rows.length > 0 ? (
-        <ol className="mt-4 divide-y divide-border rounded-2xl border border-border bg-surface">
-          {rows.map((row) => (
-            <li
-              key={`${row.handle}-${row.rank}`}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 text-sm",
-                row.isYou && "bg-surface-2",
-              )}
-            >
-              <span className="w-6 tabular-nums text-subtle">{row.rank}</span>
-              <span className="min-w-0 flex-1 truncate font-medium">
-                {row.handle}{" "}
-                {row.isYou ? (
-                  <span className="ml-2 text-xs font-normal text-muted">
-                    {row.pending ? "local" : "tú"}
-                  </span>
-                ) : null}
-              </span>
-              <span className="tabular-nums text-fg">{row.score.toLocaleString("es")}</span>
-            </li>
-          ))}
-        </ol>
+        <>
+          <ol className="mt-4 divide-y divide-border rounded-2xl border border-border bg-surface">
+            {rows.map((row) => (
+              <li
+                key={`${row.handle}-${row.rank}`}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 text-sm",
+                  row.isYou && "bg-surface-2",
+                )}
+              >
+                <span className="w-6 tabular-nums text-subtle">{row.rank}</span>
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {row.handle}{" "}
+                  {row.isYou ? (
+                    <span className="ml-2 text-xs font-normal text-muted">
+                      {row.pending ? "local" : "tú"}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="tabular-nums text-fg">{row.score.toLocaleString("es")}</span>
+              </li>
+            ))}
+          </ol>
+          {rows.length === 1 && rows[0]?.isYou ? (
+            <p className="mt-3 text-center text-xs text-subtle">
+              De momento solo está tu marca. Quien juegue hoy y entre con su cuenta aparece aquí.
+            </p>
+          ) : tab === "daily" ? (
+            <p className="mt-3 text-center text-xs text-subtle">Solo el diario de hoy.</p>
+          ) : null}
+        </>
       ) : !board && !error ? (
         <div className="mt-4 space-y-2" aria-hidden="true">
           {Array.from({ length: 5 }, (_, i) => (
@@ -163,14 +175,14 @@ export function Ranking({ onClose }: { onClose: () => void }) {
       ) : (
         <div className="mt-4 rounded-2xl border border-border bg-surface px-4 py-10 text-center">
           <p className="text-sm text-muted">Nadie ha subido una marca todavía.</p>
-          <p className="mt-1 text-xs text-subtle">Juega una partida. La tuya abre la lista.</p>
+          <p className="mt-1 text-xs text-subtle">Juega y entra con tu cuenta. La tuya abre la lista.</p>
         </div>
       )}
 
       {!isPending && !user ? (
         <div className="mt-auto pt-6">
           <Button asChild className="w-full rounded-xl">
-            <Link to="/login">Entra para subir tu marca</Link>
+            <Link to="/login">Entra con tu cuenta para aparecer</Link>
           </Button>
         </div>
       ) : null}
