@@ -29,18 +29,30 @@ export function isLocale(v: unknown): v is Locale {
   return typeof v === "string" && (LOCALES as readonly string[]).includes(v);
 }
 
+export function detectLocale(): Locale {
+  if (typeof navigator === "undefined") return DEFAULTS.locale;
+  const list = navigator.languages?.length ? navigator.languages : [navigator.language];
+  for (const raw of list) {
+    if (!raw) continue;
+    const code = raw.slice(0, 2).toLowerCase();
+    if (isLocale(code)) return code;
+  }
+  return DEFAULTS.locale;
+}
+
 export function loadPrefs(): Prefs {
-  if (!canStore()) return { ...DEFAULTS };
+  const fallback: Prefs = { theme: DEFAULTS.theme, locale: detectLocale() };
+  if (!canStore()) return fallback;
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    if (!raw) return { ...DEFAULTS };
+    if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<Prefs>;
     return {
-      theme: isTheme(parsed.theme) ? parsed.theme : DEFAULTS.theme,
-      locale: isLocale(parsed.locale) ? parsed.locale : DEFAULTS.locale,
+      theme: isTheme(parsed.theme) ? parsed.theme : fallback.theme,
+      locale: isLocale(parsed.locale) ? parsed.locale : fallback.locale,
     };
   } catch {
-    return { ...DEFAULTS };
+    return fallback;
   }
 }
 
@@ -69,4 +81,4 @@ export function applyPrefsToDocument(prefs: Prefs): void {
   if (meta) meta.setAttribute("content", color);
 }
 
-export const THEME_BOOT_SCRIPT = `(function(){try{var p=JSON.parse(localStorage.getItem("${PREFS_KEY}")||"{}");var t=p.theme==="light"||p.theme==="dark"||p.theme==="system"?p.theme:"system";var l=p.locale==="en"||p.locale==="fr"||p.locale==="de"||p.locale==="es"?p.locale:"es";document.documentElement.setAttribute("data-theme",t);document.documentElement.setAttribute("lang",l);}catch(e){document.documentElement.setAttribute("data-theme","system");}})();`;
+export const THEME_BOOT_SCRIPT = `(function(){try{var p=JSON.parse(localStorage.getItem("${PREFS_KEY}")||"{}");var t=p.theme==="light"||p.theme==="dark"||p.theme==="system"?p.theme:"system";var l=["es","en","fr","de"].indexOf(p.locale)>=0?p.locale:(navigator.language||"es").slice(0,2);if(["es","en","fr","de"].indexOf(l)<0)l="es";var r=document.documentElement;r.setAttribute("data-theme",t);r.setAttribute("lang",l);var light=t==="light"||(t==="system"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",light?"#f4f3ef":"#0c0d10");}catch(e){document.documentElement.setAttribute("data-theme","system");}})();`;
