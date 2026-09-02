@@ -187,8 +187,11 @@ describe("daily identity + share", () => {
     const lines = text.split("\n");
     assert.equal(lines.length, 2);
     assert.equal([...lines[0]!].length, 6);
-    assert.equal(glyphChar(0), "■");
+    assert.equal(glyphChar(0), "□");
+    assert.equal(glyphChar(1), "■");
     assert.equal(glyphChar(4), "♦");
+    assert.equal(GLYPH_GUIDE[0]?.name, "Pulso");
+    assert.equal(GLYPH_GUIDE[0]?.glyph, "□");
     assert.equal(renderGlyphGrid([0, 4]).includes(" "), true);
     assert.equal(GLYPH_GUIDE.length, 5);
     assert.equal(GLYPH_GUIDE[4]?.name, "Mira");
