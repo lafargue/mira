@@ -398,28 +398,117 @@ export function previewHarvest(board: Board, r: number, c: number): {
 /** Points from this tap without lucky refills: cruz + muros + Mira al caer. */
 export type TapValue = {
   harvested: number;
+  /** Cascade tiles after this fall (known tiles only, no refill). */
   mira: number;
+  /** First cascade that includes an evolved wall. */
+  frontier: number;
+  /** Longest line through an evolved wall after gravity (3 = almost Mira). */
+  setup: number;
+  /** Biggest cruz you can tap next on that new frontier. */
+  follow: number;
   score: number;
 };
 
-export function evaluateTap(board: Board, r: number, c: number): TapValue {
+const EMPTY_TAP: TapValue = {
+  harvested: 0,
+  mira: 0,
+  frontier: 0,
+  setup: 0,
+  follow: 0,
+  score: 0,
+};
+
+function runThrough(board: Board, r: number, c: number): number {
+  const color = board[r][c]?.color;
+  if (color === undefined) return 0;
+  let horiz = 1;
+  let vert = 1;
+  for (let cc = c - 1; cc >= 0 && board[r][cc]?.color === color; cc--) horiz++;
+  for (let cc = c + 1; cc < SIZE && board[r][cc]?.color === color; cc++) horiz++;
+  for (let rr = r - 1; rr >= 0 && board[rr][c]?.color === color; rr--) vert++;
+  for (let rr = r + 1; rr < SIZE && board[rr][c]?.color === color; rr++) vert++;
+  return Math.max(horiz, vert);
+}
+
+function evolvedCells(board: Board, ids: Set<number>): Pos[] {
+  const out: Pos[] = [];
+  if (ids.size === 0) return out;
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const t = board[r][c];
+      if (t && ids.has(t.id)) out.push({ r, c });
+    }
+  }
+  return out;
+}
+
+function frontierGroup(board: Board, cells: Pos[]): Pos[] {
+  const seen = new Set<string>();
+  const out: Pos[] = [];
+  const add = (r: number, c: number) => {
+    const key = `${r},${c}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ r, c });
+  };
+  for (const p of cells) {
+    const color = board[p.r][p.c]?.color;
+    if (color === undefined) continue;
+    add(p.r, p.c);
+    for (let cc = p.c - 1; cc >= 0 && board[p.r][cc]?.color === color; cc--) add(p.r, cc);
+    for (let cc = p.c + 1; cc < SIZE && board[p.r][cc]?.color === color; cc++) add(p.r, cc);
+    for (let rr = p.r - 1; rr >= 0 && board[rr][p.c]?.color === color; rr--) add(rr, p.c);
+    for (let rr = p.r + 1; rr < SIZE && board[rr][p.c]?.color === color; rr++) add(rr, p.c);
+  }
+  return out;
+}
+
+/** Harvest, evolve each wall once, gravity. No random refill. */
+function settleTap(
+  board: Board,
+  r: number,
+  c: number,
+): { harvested: Harvested[]; evolvedIds: Set<number>; board: Board } {
   const next = cloneBoard(board);
   const { harvested, walls } = harvestFrom(next, r, c);
-  if (harvested.length === 0) return { harvested: 0, mira: 0, score: 0 };
-
   const harvestedIds = new Set(harvested.map((h) => h.id));
+  const evolvedIds = new Set<number>();
+  const seenWall = new Set<string>();
   for (const w of walls) {
+    const key = `${w.r},${w.c}`;
+    if (seenWall.has(key)) continue;
+    seenWall.add(key);
     const t = next[w.r][w.c];
     if (!t || harvestedIds.has(t.id)) continue;
     next[w.r][w.c] = { id: t.id, color: nextColor(t.color) };
+    evolvedIds.add(t.id);
   }
   for (const h of harvested) {
     if (next[h.r][h.c]?.id === h.id) next[h.r][h.c] = null;
   }
   applyGravity(next);
+  return { harvested, evolvedIds, board: next };
+}
 
+export function evaluateTap(board: Board, r: number, c: number): TapValue {
+  if (!board[r][c]) return EMPTY_TAP;
+  const settled = settleTap(board, r, c);
+  if (settled.harvested.length === 0) return EMPTY_TAP;
+
+  const walls = evolvedCells(settled.board, settled.evolvedIds);
+  let setup = 0;
+  for (const p of walls) {
+    setup = Math.max(setup, runThrough(settled.board, p.r, p.c));
+  }
+  let follow = 0;
+  for (const p of frontierGroup(settled.board, walls)) {
+    follow = Math.max(follow, harvestFrom(settled.board, p.r, p.c).harvested.length);
+  }
+
+  const next = settled.board;
   let mira = 0;
   let cascadeScore = 0;
+  let frontier = 0;
   let chain = 1;
   let guard = 0;
   while (guard++ < 12) {
@@ -428,6 +517,9 @@ export function evaluateTap(board: Board, r: number, c: number): TapValue {
     chain += 1;
     mira += run.length;
     cascadeScore += harvestScore(run.length, chain);
+    if (frontier === 0 && run.some((h) => settled.evolvedIds.has(h.id))) {
+      frontier = run.length;
+    }
     for (const h of run) {
       if (next[h.r][h.c]?.id === h.id) next[h.r][h.c] = null;
     }
@@ -435,9 +527,12 @@ export function evaluateTap(board: Board, r: number, c: number): TapValue {
   }
 
   return {
-    harvested: harvested.length,
+    harvested: settled.harvested.length,
     mira,
-    score: harvestScore(harvested.length, 1) + cascadeScore,
+    frontier,
+    setup,
+    follow,
+    score: harvestScore(settled.harvested.length, 1) + cascadeScore,
   };
 }
 

@@ -222,7 +222,7 @@ const es: Messages = {
   tipNeed: "Sin créditos",
   tipDailyWarn: "Con ayuda. Esta marca no entra al ranking.",
   helpedMark: "Con ayuda",
-  helpedHint: "El Tip ilumina la jugada con más puntos, también un Mira al cambiar un muro. En Diario esa marca no se publica.",
+  helpedHint: "El Tip ilumina el cambio de muro que hace un Mira, no la cruz más gorda. En Diario esa marca no se publica.",
   grantHint: "Saldo de prueba al empezar. El Tip cuesta 1. En Diario, con ayuda no se publica.",
 };
 
@@ -276,7 +276,7 @@ const en: Messages = {
   tipNeed: "No credits",
   tipDailyWarn: "Helped. This mark stays off the ranking.",
   helpedMark: "Helped",
-  helpedHint: "A Tip lights the highest-scoring play, including a Mira from a wall change. On Daily that mark is not published.",
+  helpedHint: "A Tip lights the wall change that makes a Mira, not the fattest cross. On Daily that mark is not published.",
   grantHint: "Starter balance. A Tip costs 1. On Daily, a helped mark is not published.",
 };
 
@@ -309,7 +309,7 @@ const fr: Messages = {
   tipNeed: "Sans crédits",
   tipDailyWarn: "Avec aide. Cette marque n’entre pas au classement.",
   helpedMark: "Avec aide",
-  helpedHint: "Le Tip éclaire le coup qui rapporte le plus, y compris un Mira en changeant un mur. Au quotidien, cette marque n’est pas publiée.",
+  helpedHint: "Le Tip éclaire le changement de mur qui fait un Mira, pas la croix la plus grosse. Au quotidien, cette marque n’est pas publiée.",
   grantHint: "Solde d’essai au départ. Un Tip coûte 1. Au quotidien, avec aide, pas de classement.",
 };
 
@@ -342,7 +342,7 @@ const de: Messages = {
   tipNeed: "Kein Guthaben",
   tipDailyWarn: "Mit Hilfe. Diese Marke kommt nicht in die Rangliste.",
   helpedMark: "Mit Hilfe",
-  helpedHint: "Ein Tipp zeigt den Zug mit den meisten Punkten, auch ein Mira durch eine veränderte Wand. Im Daily wird die Marke nicht veröffentlicht.",
+  helpedHint: "Ein Tipp zeigt den Wandwechsel, der ein Mira ergibt, nicht das dickste Kreuz. Im Daily wird die Marke nicht veröffentlicht.",
   grantHint: "Startguthaben. Ein Tipp kostet 1. Im Daily zählt eine geholfen Marke nicht.",
 };
 
