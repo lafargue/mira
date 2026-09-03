@@ -6,6 +6,7 @@ export type DailyRecord = {
   score: number;
   glyphs: number[];
   played: boolean;
+  helped?: boolean;
 };
 
 export type Stats = {
