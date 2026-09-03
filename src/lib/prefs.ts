@@ -30,7 +30,7 @@ export function isLocale(v: unknown): v is Locale {
 }
 
 export function detectLocale(): Locale {
-  if (typeof navigator === "undefined") return DEFAULTS.locale;
+  if (typeof window === "undefined") return DEFAULTS.locale;
   const list = navigator.languages?.length ? navigator.languages : [navigator.language];
   for (const raw of list) {
     if (!raw) continue;

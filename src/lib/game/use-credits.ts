@@ -5,7 +5,7 @@ import { loadLocalWallet, spendLocal, type CreditSpend } from "@/lib/game/wallet
 
 export function useCredits() {
   const { user, isPending } = useCurrentUserState();
-  const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState(() => loadLocalWallet().balance);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -24,7 +24,10 @@ export function useCredits() {
   }, [user]);
 
   useEffect(() => {
-    if (isPending) return;
+    if (isPending) {
+      setBalance(loadLocalWallet().balance);
+      return;
+    }
     void refresh();
   }, [isPending, refresh]);
 
