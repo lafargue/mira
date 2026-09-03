@@ -1,7 +1,8 @@
 import { useRef } from "react";
-import { ArrowLeft, Check, Monitor, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Check, Monitor, Moon, Sun, Wand2 } from "lucide-react";
 import { usePrefs } from "@/lib/prefs-context";
 import { LOCALES, THEMES, type Locale, type Theme } from "@/lib/prefs";
+import { TIP_COST } from "@/lib/game/wallet";
 import { cn } from "@/lib/utils";
 
 const THEME_ICON = {
@@ -16,7 +17,7 @@ const THEME_SWATCH: Record<Theme, { bg: string; accent: string }> = {
   light: { bg: "#f4f3ef", accent: "#e25c6a" },
 };
 
-export function Settings({ onClose }: { onClose: () => void }) {
+export function Settings({ onClose, credits }: { onClose: () => void; credits: number }) {
   const { t, theme, locale, setTheme, setLocale } = usePrefs();
   const themeRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const localeRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -66,6 +67,21 @@ export function Settings({ onClose }: { onClose: () => void }) {
         </button>
         <h2 className="font-display text-2xl tracking-tight">{t.settings}</h2>
       </header>
+
+      <section className="mt-8" aria-labelledby="mira-wallet">
+        <h3 id="mira-wallet" className="font-medium text-fg">
+          {t.credits}
+        </h3>
+        <p className="mt-1 text-sm leading-relaxed text-muted">{t.helpedHint}</p>
+        <div className="mt-4 flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3">
+          <span className="flex items-center gap-2 text-sm text-muted">
+            <Wand2 className="size-4" strokeWidth={1.75} aria-hidden="true" />
+            {t.tip} · {TIP_COST}
+          </span>
+          <span className="font-display text-2xl tabular-nums text-fg">{credits}</span>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-subtle">{t.grantHint}</p>
+      </section>
 
       <section className="mt-8" aria-labelledby="mira-appearance">
         <h3 id="mira-appearance" className="font-medium text-fg">
