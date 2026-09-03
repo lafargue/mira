@@ -395,6 +395,52 @@ export function previewHarvest(board: Board, r: number, c: number): {
   return harvestFrom(board, r, c);
 }
 
+/** Points from this tap without lucky refills: cruz + muros + Mira al caer. */
+export type TapValue = {
+  harvested: number;
+  mira: number;
+  score: number;
+};
+
+export function evaluateTap(board: Board, r: number, c: number): TapValue {
+  const next = cloneBoard(board);
+  const { harvested, walls } = harvestFrom(next, r, c);
+  if (harvested.length === 0) return { harvested: 0, mira: 0, score: 0 };
+
+  const harvestedIds = new Set(harvested.map((h) => h.id));
+  for (const w of walls) {
+    const t = next[w.r][w.c];
+    if (!t || harvestedIds.has(t.id)) continue;
+    next[w.r][w.c] = { id: t.id, color: nextColor(t.color) };
+  }
+  for (const h of harvested) {
+    if (next[h.r][h.c]?.id === h.id) next[h.r][h.c] = null;
+  }
+  applyGravity(next);
+
+  let mira = 0;
+  let cascadeScore = 0;
+  let chain = 1;
+  let guard = 0;
+  while (guard++ < 12) {
+    const run = findCascadeRuns(next);
+    if (run.length === 0) break;
+    chain += 1;
+    mira += run.length;
+    cascadeScore += harvestScore(run.length, chain);
+    for (const h of run) {
+      if (next[h.r][h.c]?.id === h.id) next[h.r][h.c] = null;
+    }
+    applyGravity(next);
+  }
+
+  return {
+    harvested: harvested.length,
+    mira,
+    score: harvestScore(harvested.length, 1) + cascadeScore,
+  };
+}
+
 /** Intensity 0–4 for share glyphs (1 harvested → 0, 5+ or cascade → 4). */
 export function pulseGlyph(result: PulseResult): number {
   if (result.cascades.length > 0) return 4;
