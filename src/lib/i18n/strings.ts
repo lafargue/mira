@@ -110,6 +110,7 @@ export type Messages = {
   tipDailyWarn: string;
   helpedMark: string;
   helpedHint: string;
+  grantHint: string;
 };
 
 const es: Messages = {
@@ -222,6 +223,7 @@ const es: Messages = {
   tipDailyWarn: "Con ayuda. Esta marca no entra al ranking.",
   helpedMark: "Con ayuda",
   helpedHint: "El Tip ilumina la mejor casilla. En Diario esa marca no se publica.",
+  grantHint: "Saldo de prueba al empezar. El Tip cuesta 1. En Diario, con ayuda no se publica.",
 };
 
 const en: Messages = {
@@ -275,6 +277,7 @@ const en: Messages = {
   tipDailyWarn: "Helped. This mark stays off the ranking.",
   helpedMark: "Helped",
   helpedHint: "A Tip lights the best cell. On Daily that mark is not published.",
+  grantHint: "Starter balance. A Tip costs 1. On Daily, a helped mark is not published.",
 };
 
 const fr: Messages = {
@@ -307,6 +310,7 @@ const fr: Messages = {
   tipDailyWarn: "Avec aide. Cette marque n’entre pas au classement.",
   helpedMark: "Avec aide",
   helpedHint: "Le Tip éclaire la meilleure case. Au quotidien, cette marque n’est pas publiée.",
+  grantHint: "Solde d’essai au départ. Un Tip coûte 1. Au quotidien, avec aide, pas de classement.",
 };
 
 const de: Messages = {
@@ -339,6 +343,7 @@ const de: Messages = {
   tipDailyWarn: "Mit Hilfe. Diese Marke kommt nicht in die Rangliste.",
   helpedMark: "Mit Hilfe",
   helpedHint: "Ein Tipp leuchtet die beste Kachel. Im Daily wird die Marke nicht veröffentlicht.",
+  grantHint: "Startguthaben. Ein Tipp kostet 1. Im Daily zählt eine geholfen Marke nicht.",
 };
 
 export const STRINGS: Record<Locale, Messages> = { es, en, fr, de };
