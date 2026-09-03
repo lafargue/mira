@@ -44,7 +44,7 @@ export function Ranking({ onClose }: { onClose: () => void }) {
     const run = async () => {
       const local = loadStats();
       try {
-        if (tab === "daily" && local.today?.played && local.today.score > 0) {
+        if (tab === "daily" && local.today?.played && local.today.score > 0 && !local.today.helped) {
           await submitScore({
             data: {
               mode: "daily",
