@@ -40,6 +40,7 @@ const submitInput = z.object({
   score: z.number().int().min(0).max(1_000_000),
   dateKey: z.string().max(16),
   glyphs: z.array(z.number().int().min(0).max(4)).max(12),
+  helped: z.boolean().optional(),
 });
 
 async function handleFor(userId: string): Promise<string> {
@@ -57,6 +58,9 @@ export const submitScore = createServerFn({ method: "POST" })
     const dateKey = data.mode === "daily" ? data.dateKey : "";
     if (data.mode === "daily" && !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
       return { ok: false as const, score: 0 };
+    }
+    if (data.mode === "daily" && data.helped) {
+      return { ok: false as const, score: 0, skipped: "helped" as const };
     }
     const handle = await handleFor(context.userId);
     const glyphs = JSON.stringify(data.glyphs);
