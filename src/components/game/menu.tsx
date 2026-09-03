@@ -45,6 +45,15 @@ export function Menu({
           <button
             type="button"
             onClick={onSettings}
+            className="flex h-11 items-center gap-1.5 rounded-lg px-2 text-muted transition-colors duration-150 hover:text-fg"
+            aria-label={`${t.credits} ${credits}`}
+          >
+            <Wand2 className="size-4" strokeWidth={1.75} />
+            <span className="font-display text-base tabular-nums text-fg">{credits}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onSettings}
             className="flex size-11 items-center justify-center rounded-lg text-muted transition-colors duration-150 hover:text-fg"
             aria-label={t.settings}
           >
