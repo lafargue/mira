@@ -104,6 +104,12 @@ export type Messages = {
   shareStreak: string;
   sharePts: string;
   metaDescription: string;
+  credits: string;
+  tip: string;
+  tipNeed: string;
+  tipDailyWarn: string;
+  helpedMark: string;
+  helpedHint: string;
 };
 
 const es: Messages = {
@@ -210,6 +216,12 @@ const es: Messages = {
   shareStreak: "racha",
   sharePts: "pts",
   metaDescription: "Toca un color. Resuena en cruz. Evoluciona el muro. El diario que no puedes dejar.",
+  credits: "Créditos",
+  tip: "Tip",
+  tipNeed: "Sin créditos",
+  tipDailyWarn: "Con ayuda. Esta marca no entra al ranking.",
+  helpedMark: "Con ayuda",
+  helpedHint: "El Tip ilumina la mejor casilla. En Diario esa marca no se publica.",
 };
 
 const en: Messages = {
@@ -257,6 +269,12 @@ const en: Messages = {
   pressure: "Pressure",
   holdHint: "Hold to see the cross. Release to play.",
   shareStreak: "streak",
+  credits: "Credits",
+  tip: "Tip",
+  tipNeed: "No credits",
+  tipDailyWarn: "Helped. This mark stays off the ranking.",
+  helpedMark: "Helped",
+  helpedHint: "A Tip lights the best cell. On Daily that mark is not published.",
 };
 
 const fr: Messages = {
@@ -283,6 +301,12 @@ const fr: Messages = {
   language: "Langue",
   languageHint: "Change le texte du jeu. Les noms des coups restent.",
   pressure: "Pression",
+  credits: "Crédits",
+  tip: "Tip",
+  tipNeed: "Sans crédits",
+  tipDailyWarn: "Avec aide. Cette marque n’entre pas au classement.",
+  helpedMark: "Avec aide",
+  helpedHint: "Le Tip éclaire la meilleure case. Au quotidien, cette marque n’est pas publiée.",
 };
 
 const de: Messages = {
@@ -309,6 +333,12 @@ const de: Messages = {
   language: "Sprache",
   languageHint: "Ändert den Text. Die Zugnamen bleiben.",
   pressure: "Druck",
+  credits: "Guthaben",
+  tip: "Tipp",
+  tipNeed: "Kein Guthaben",
+  tipDailyWarn: "Mit Hilfe. Diese Marke kommt nicht in die Rangliste.",
+  helpedMark: "Mit Hilfe",
+  helpedHint: "Ein Tipp leuchtet die beste Kachel. Im Daily wird die Marke nicht veröffentlicht.",
 };
 
 export const STRINGS: Record<Locale, Messages> = { es, en, fr, de };
