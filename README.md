@@ -5,6 +5,7 @@ Juego de puzzle para móvil. Toca un color, se come en cruz, el muro evoluciona.
 - **Diario** — 12 pulsos, el mismo tablero para todo el mundo. Comparte la cuadrícula y reta a un amigo.
 - **Sin fin** — una barra de pulso. Si se llena, se acabó.
 - **Ranking** — entra con Google o X para subir tu marca.
+- **Créditos** — saldo de prueba al empezar. El Tip (1 crédito) señala la mejor casilla. En Diario, una partida con Tip no entra al ranking.
 
 ## Cómo se juega
 
