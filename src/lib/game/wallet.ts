@@ -1,7 +1,9 @@
 export const STARTING_CREDITS = 5;
 export const TIP_COST = 1;
+/** Test refill applies only to this signed-in account. */
+export const OWNER_EMAIL = "jaime32@gmail.com";
 
-export const CREDIT_REASONS = ["grant", "tip"] as const;
+export const CREDIT_REASONS = ["grant", "tip", "refill"] as const;
 export type CreditReason = (typeof CREDIT_REASONS)[number];
 
 export type CreditSpend = {
@@ -18,6 +20,10 @@ export type LocalWallet = {
   granted: boolean;
   ledger: Array<{ amount: number; reason: CreditReason; at: string }>;
 };
+
+export function isOwnerEmail(email: string | null | undefined): boolean {
+  return (email ?? "").trim().toLowerCase() === OWNER_EMAIL;
+}
 
 function emptyLocal(): LocalWallet {
   return { version: 1, balance: 0, granted: false, ledger: [] };
