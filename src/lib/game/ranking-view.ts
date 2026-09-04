@@ -1,4 +1,4 @@
-import { isPublicHandle, publicHandle } from "./handle.ts";
+import { publicHandle } from "./handle.ts";
 import { cleanGlyphsOf, cleanScoreOf, type DailyRecord } from "./save.ts";
 
 export type BoardRow = {
@@ -22,13 +22,17 @@ export function fallbackHandle(userId: string): string {
   return `Mira-${n}`;
 }
 
-/** Prefer the claimed handle. Never a Google full name. */
+/** Claimed alias wins. Otherwise the name already on the score (legacy Google names stay until they pick one). */
 export function displayHandle(
   profileHandle: string | null | undefined,
   userId: string,
   stored = "",
 ): string {
-  return publicHandle(profileHandle) ?? (isPublicHandle(stored) ? stored.trim() : fallbackHandle(userId));
+  const claimed = publicHandle(profileHandle);
+  if (claimed) return claimed;
+  const published = stored.trim();
+  if (published) return published;
+  return fallbackHandle(userId);
 }
 
 export function looksLikePersonName(raw: string): boolean {
@@ -86,14 +90,13 @@ export type RankingSync =
   | { action: "submit"; score: number; glyphs: number[] }
   | { action: "withdraw" };
 
-/** Helped personal bests never withdraw a clean published mark. */
+/** Publish a clean mark. Never delete one because a later run used a Tip. */
 export function dailySyncPlan(today: DailyRecord | null | undefined, dateKey: string): RankingSync {
   if (!today?.played || today.dateKey !== dateKey) return { action: "none" };
   const clean = cleanScoreOf(today);
   if (clean > 0) {
     return { action: "submit", score: clean, glyphs: cleanGlyphsOf(today) };
   }
-  if (today.helped) return { action: "withdraw" };
   return { action: "none" };
 }
 

@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { listBoard, submitScore, withdrawHelpedDaily, type BoardPayload } from "@/lib/game/scores";
+import { listBoard, submitScore, type BoardPayload } from "@/lib/game/scores";
 import { utcDateKey } from "@/lib/game/rng";
 import { loadStats } from "@/lib/game/save";
 import { dailySyncPlan, rankingHeadline, visibleBoard, youTagLabel } from "@/lib/game/ranking-view";
@@ -59,9 +59,7 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
       try {
         if (tab === "daily") {
           const plan = dailySyncPlan(local.today, dateKey);
-          if (plan.action === "withdraw") {
-            await withdrawHelpedDaily({ data: { dateKey, helped: true } });
-          } else if (plan.action === "submit") {
+          if (plan.action === "submit") {
             await submitScore({
               data: {
                 mode: "daily",

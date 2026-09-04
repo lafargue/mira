@@ -12,12 +12,16 @@ import {
 } from "./ranking-view.ts";
 
 describe("displayHandle", () => {
-  it("never puts a Google full name on the board", () => {
+  it("uses the claimed alias when present", () => {
     assert.equal(displayHandle("ana", "user-1"), "ana");
+    assert.equal(displayHandle("jaime32", "abc", "Jaime Martínez Lafargue"), "jaime32");
+  });
+
+  it("keeps the published score name so the board is not Mira-XXXX (screenshot regression)", () => {
+    assert.equal(displayHandle(null, "u2", "Montse Ferrando"), "Montse Ferrando");
+    assert.equal(displayHandle(null, "abc", "Jaime Martínez Lafargue"), "Jaime Martínez Lafargue");
     assert.equal(displayHandle(null, "abc", "Mira-OLD"), "Mira-OLD");
-    assert.equal(displayHandle("   ", "abc", "Jaime Martínez"), fallbackHandle("abc"));
-    assert.equal(displayHandle("Jaime Martínez Lafargue", "abc"), fallbackHandle("abc"));
-    assert.equal(displayHandle(null, "u2", "Montse Ferrando"), fallbackHandle("u2"));
+    assert.equal(displayHandle("   ", "abc", ""), fallbackHandle("abc"));
     assert.match(fallbackHandle("abc"), /^Mira-/);
     assert.equal(looksLikePersonName("Montse Ferrando"), true);
     assert.equal(looksLikePersonName("jaime32"), false);
@@ -89,12 +93,12 @@ describe("dailySyncPlan", () => {
     assert.deepEqual(plan, { action: "submit", score: 13760, glyphs: [2] });
   });
 
-  it("withdraws only a helped-only day (nothing clean to keep)", () => {
+  it("never withdraws just because localStorage still has a helped 21060 (screenshot after republish)", () => {
     const plan = dailySyncPlan(
       { dateKey: "2026-09-04", score: 21060, glyphs: [1], played: true, helped: true, cleanScore: 0 },
       "2026-09-04",
     );
-    assert.equal(plan.action, "withdraw");
+    assert.equal(plan.action, "none");
   });
 
   it("submits a clean-only day", () => {
@@ -105,12 +109,12 @@ describe("dailySyncPlan", () => {
     assert.deepEqual(plan, { action: "submit", score: 13760, glyphs: [3] });
   });
 
-  it("legacy helped without cleanScore withdraws instead of publishing 21060", () => {
+  it("legacy helped without cleanScore does not publish 21060 and does not delete the board", () => {
     const plan = dailySyncPlan(
       { dateKey: "2026-09-04", score: 21060, glyphs: [1], played: true, helped: true },
       "2026-09-04",
     );
-    assert.equal(plan.action, "withdraw");
+    assert.equal(plan.action, "none");
   });
 });
 
