@@ -25,6 +25,20 @@ export function isOwnerEmail(email: string | null | undefined): boolean {
   return (email ?? "").trim().toLowerCase() === OWNER_EMAIL;
 }
 
+/** Credits follow the account id/email, never the public handle. */
+export function mergedBalance(
+  currentUserId: string,
+  wallets: Array<{ userId: string; balance: number }>,
+): number {
+  let best = 0;
+  for (const w of wallets) {
+    if (w.balance > best) best = w.balance;
+  }
+  const mine = wallets.find((w) => w.userId === currentUserId);
+  if (mine && mine.balance > best) best = mine.balance;
+  return Math.max(0, best);
+}
+
 function emptyLocal(): LocalWallet {
   return { version: 1, balance: 0, granted: false, ledger: [] };
 }

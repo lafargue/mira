@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useSessionReady } from "@/lib/auth/use-current-user";
 import { publicHandle, slugFromName } from "@/lib/game/handle";
 import { checkHandle, getMyProfile, setHandle, type SetHandleResult } from "@/lib/game/profile";
 
 export function useProfile() {
-  const { user, isPending } = useCurrentUserState();
+  const { user, isPending } = useSessionReady();
   const userId = user?.id ?? null;
   const displayName = user?.displayName ?? "";
   const [handle, setLocal] = useState<string | null>(null);

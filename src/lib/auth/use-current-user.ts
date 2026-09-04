@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { authClient, authEnabled } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
@@ -85,4 +85,19 @@ export function useCurrentUserState(): CurrentUserState {
  */
 export function useCurrentUser(): AppUser | null {
   return useCurrentUserState().user;
+}
+
+/** Same as useCurrentUserState, but a stuck session cannot freeze the menu. */
+export function useSessionReady(ms = 2500): CurrentUserState {
+  const { user, isPending } = useCurrentUserState();
+  const [gaveUp, setGaveUp] = useState(false);
+  useEffect(() => {
+    if (!isPending) {
+      setGaveUp(false);
+      return;
+    }
+    const t = window.setTimeout(() => setGaveUp(true), ms);
+    return () => window.clearTimeout(t);
+  }, [isPending, ms]);
+  return { user, isPending: isPending && !gaveUp };
 }

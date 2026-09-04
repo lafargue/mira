@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { signOut } from "@/lib/auth/client";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useSessionReady } from "@/lib/auth/use-current-user";
 import { useState } from "react";
 
 export function AuthChip({ handle }: { handle?: string | null }) {
-  const { user, isPending } = useCurrentUserState();
+  const { user, isPending } = useSessionReady();
   const [signingOut, setSigningOut] = useState(false);
 
   if (isPending) {

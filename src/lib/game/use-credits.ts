@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useSessionReady } from "@/lib/auth/use-current-user";
 import { buyPack, getWallet, spendCredit } from "@/lib/game/credits";
 import { loadLocalWallet, spendLocal, type CreditSpend } from "@/lib/game/wallet";
 import type { BuyResult, PackId } from "@/lib/game/packs";
 
 export function useCredits() {
-  const { user, isPending } = useCurrentUserState();
+  const { user, isPending } = useSessionReady();
   const [balance, setBalance] = useState(() => loadLocalWallet().balance);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -13,17 +13,18 @@ export function useCredits() {
   const userId = user?.id ?? null;
 
   const refresh = useCallback(async () => {
-    if (userId) {
-      try {
+    try {
+      if (userId) {
         const wallet = await getWallet();
         setBalance(wallet.balance);
-      } catch {
+      } else {
         setBalance(loadLocalWallet().balance);
       }
-    } else {
+    } catch {
       setBalance(loadLocalWallet().balance);
+    } finally {
+      setReady(true);
     }
-    setReady(true);
   }, [userId]);
 
   useEffect(() => {

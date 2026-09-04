@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { costFor, STARTING_CREDITS, TIP_COST, isOwnerEmail } from "./wallet.ts";
+import { costFor, STARTING_CREDITS, TIP_COST, isOwnerEmail, mergedBalance } from "./wallet.ts";
 
 describe("wallet rules", () => {
   it("starting grant is enough to try a few tips", () => {
@@ -22,5 +22,19 @@ describe("wallet rules", () => {
     assert.equal(isOwnerEmail(" jaime32@gmail.com "), true);
     assert.equal(isOwnerEmail("otro@gmail.com"), false);
     assert.equal(isOwnerEmail(null), false);
+    assert.equal(isOwnerEmail("jaime32"), false);
+    assert.equal(isOwnerEmail("@jaime32"), false);
+  });
+
+  it("credits follow the account id, never a handle change", () => {
+    assert.equal(
+      mergedBalance("user-now", [
+        { userId: "user-old", balance: 87 },
+        { userId: "user-now", balance: 5 },
+      ]),
+      87,
+    );
+    assert.equal(mergedBalance("user-now", [{ userId: "user-now", balance: 12 }]), 12);
+    assert.equal(mergedBalance("user-now", []), 0);
   });
 });

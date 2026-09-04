@@ -60,19 +60,38 @@ async function alternatives(desired: string, userId: string, seedName?: string):
 export const getMyProfile = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const sql = await getSql();
-    const rows = await sql<{ handle: string }>`
-      select handle from mira_profiles where user_id = ${context.userId} limit 1
-    `;
-    const name = await nameFor(context.userId);
-    const handle = publicHandle(rows[0]?.handle ?? null);
-    const pick = nextFreeHandle(handle ?? slugFromName(name), await takenSet(handle ?? slugFromName(name), context.userId, name), name);
-    return {
-      handle,
-      suggested: handle ?? pick.seed,
-      suggestions: pick.suggestions,
-      fullName: name,
-    };
+    try {
+      const sql = await getSql();
+      const rows = await sql<{ handle: string }>`
+        select handle from mira_profiles where user_id = ${context.userId} limit 1
+      `;
+      const handle = publicHandle(rows[0]?.handle ?? null);
+      if (handle) {
+        return { handle, suggested: handle, suggestions: [] as string[], fullName: "" };
+      }
+      let name = "";
+      try {
+        name = await nameFor(context.userId);
+      } catch {
+        name = "";
+      }
+      let suggested = slugFromName(name) || "player";
+      let suggestions: string[] = [];
+      try {
+        const pick = nextFreeHandle(
+          suggested,
+          await takenSet(suggested, context.userId, name),
+          name,
+        );
+        suggested = pick.seed;
+        suggestions = pick.suggestions;
+      } catch {
+        /* menu must still load */
+      }
+      return { handle: null, suggested, suggestions, fullName: name };
+    } catch {
+      return { handle: null, suggested: "player", suggestions: [] as string[], fullName: "" };
+    }
   });
 
 export const checkHandle = createServerFn({ method: "POST" })
