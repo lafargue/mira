@@ -3,24 +3,31 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { listBoard, submitScore, type BoardPayload } from "@/lib/game/scores";
+import { listBoard, submitScore, withdrawHelpedDaily, type BoardPayload } from "@/lib/game/scores";
 import { utcDateKey } from "@/lib/game/rng";
 import { loadStats } from "@/lib/game/save";
 import { visibleBoard } from "@/lib/game/ranking-view";
 import { cn } from "@/lib/utils";
+import { usePrefs } from "@/lib/prefs-context";
 
 export function Ranking({ onClose }: { onClose: () => void }) {
+  const { t } = usePrefs();
   const { user, isPending } = useCurrentUserState();
   const [tab, setTab] = useState<"daily" | "endless">("daily");
   const [board, setBoard] = useState<BoardPayload | null>(null);
   const [error, setError] = useState<"load" | null>(null);
   const [localScore, setLocalScore] = useState(0);
+  const [helpedToday, setHelpedToday] = useState(false);
   const dateKey = utcDateKey();
-  const rows = visibleBoard(board?.rows ?? [], localScore, Boolean(user));
+  const rows = visibleBoard(board?.rows ?? [], localScore, Boolean(user), {
+    hideLocal: tab === "daily" && helpedToday,
+    youHandle: user?.displayName ?? undefined,
+  });
 
   useEffect(() => {
     const local = loadStats();
     setLocalScore(tab === "daily" ? (local.today?.score ?? 0) : local.bestEndless);
+    setHelpedToday(Boolean(tab === "daily" && local.today?.helped));
   }, [tab]);
 
   useEffect(() => {
@@ -44,13 +51,16 @@ export function Ranking({ onClose }: { onClose: () => void }) {
     const run = async () => {
       const local = loadStats();
       try {
-        if (tab === "daily" && local.today?.played && local.today.score > 0 && !local.today.helped) {
+        if (tab === "daily" && local.today?.played && local.today.helped) {
+          await withdrawHelpedDaily({ data: { dateKey, helped: true } });
+        } else if (tab === "daily" && local.today?.played && local.today.score > 0 && !local.today.helped) {
           await submitScore({
             data: {
               mode: "daily",
               score: local.today.score,
               dateKey,
               glyphs: local.today.glyphs ?? [],
+              helped: false,
             },
           });
         }
@@ -111,22 +121,31 @@ export function Ranking({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {board?.myRank ? (
+      {board?.myRank && !(tab === "daily" && helpedToday) ? (
         <p className="mt-5 text-center text-sm text-muted">
-          Tu puesto: <span className="tabular-nums text-fg">#{board.myRank}</span>
-          {board.total > 1 ? <span className="tabular-nums"> de {board.total}</span> : null}
+          {t.yourPlace}: <span className="tabular-nums text-fg">#{board.myRank}</span>
+          {board.total > 1 ? (
+            <span className="tabular-nums">
+              {" "}
+              {t.of} {board.total}
+            </span>
+          ) : null}
           {board.myScore !== null ? (
             <span className="tabular-nums"> · {board.myScore.toLocaleString("es")} pts</span>
           ) : null}
         </p>
       ) : localScore > 0 ? (
         <p className="mt-5 text-center text-sm text-muted">
-          Tu marca: <span className="tabular-nums text-fg">{localScore.toLocaleString("es")} pts</span>
-          {!user ? <span> · entra con tu cuenta para publicarla</span> : null}
+          {t.yourMark}: <span className="tabular-nums text-fg">{localScore.toLocaleString("es")} pts</span>
+          {tab === "daily" && helpedToday ? (
+            <span> · {t.helpedMark}</span>
+          ) : !user ? (
+            <span> · {t.signInToPublish}</span>
+          ) : null}
         </p>
       ) : (
         <p className="mt-5 text-center text-sm text-muted">
-          {tab === "daily" ? "El diario de hoy. Hay que entrar con tu cuenta para aparecer." : "La mejor marca de cada cuenta."}
+          {tab === "daily" ? t.rankingEmptyDaily : t.rankingEmptyEndless}
         </p>
       )}
 
@@ -147,12 +166,8 @@ export function Ranking({ onClose }: { onClose: () => void }) {
               >
                 <span className="w-6 tabular-nums text-subtle">{row.rank}</span>
                 <span className="min-w-0 flex-1 truncate font-medium">
-                  {row.handle}{" "}
-                  {row.isYou ? (
-                    <span className="ml-2 text-xs font-normal text-muted">
-                      {row.pending ? "local" : "tú"}
-                    </span>
-                  ) : null}
+                  {row.handle}
+                  {youTag(row.handle, row.isYou, row.pending, t.you, t.local)}
                 </span>
                 <span className="tabular-nums text-fg">{row.score.toLocaleString("es")}</span>
               </li>
@@ -188,4 +203,11 @@ export function Ranking({ onClose }: { onClose: () => void }) {
       ) : null}
     </div>
   );
+}
+
+function youTag(handle: string, isYou: boolean, pending: boolean, you: string, local: string) {
+  if (!isYou) return null;
+  const tag = pending ? local : you;
+  if (handle.trim().toLowerCase() === tag.trim().toLowerCase()) return null;
+  return <span className="ml-2 text-xs font-normal text-muted">{tag}</span>;
 }

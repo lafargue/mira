@@ -36,18 +36,24 @@ export function visibleBoard(
   rows: BoardRow[],
   localScore: number,
   signedIn: boolean,
+  opts: { hideLocal?: boolean; youHandle?: string } = {},
 ): VisibleRow[] {
-  const out: VisibleRow[] = rows.map((r, i) => ({
+  let out: VisibleRow[] = rows.map((r, i) => ({
     rank: i + 1,
     handle: r.handle,
     score: r.score,
     isYou: r.isYou,
     pending: false,
   }));
+  if (opts.hideLocal) {
+    out = out.filter((r) => !r.isYou);
+    return out.map((r, i) => ({ ...r, rank: i + 1 }));
+  }
   if (localScore <= 0 || out.some((r) => r.isYou)) return out;
+  const you = (opts.youHandle ?? "").trim() || "Tú";
   const row: VisibleRow = {
     rank: 0,
-    handle: "Tú",
+    handle: you,
     score: localScore,
     isYou: true,
     pending: !signedIn,

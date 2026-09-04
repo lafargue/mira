@@ -82,6 +82,22 @@ export const submitScore = createServerFn({ method: "POST" })
     return { ok: true as const, score: mine[0]?.score ?? data.score };
   });
 
+/** Daily + Tip: pull this account's mark off today's board. */
+export const withdrawHelpedDaily = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((raw: unknown) =>
+    z.object({ dateKey: z.string().max(16), helped: z.literal(true) }).parse(raw),
+  )
+  .handler(async ({ context, data }) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.dateKey)) return { ok: false as const };
+    const sql = await getSql();
+    await sql`
+      delete from mira_scores
+      where user_id = ${context.userId} and mode = 'daily' and date_key = ${data.dateKey}
+    `;
+    return { ok: true as const };
+  });
+
 const boardInput = z.object({
   mode: z.enum(["daily", "endless"]),
   dateKey: z.string().max(16),

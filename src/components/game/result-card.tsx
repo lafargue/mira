@@ -104,6 +104,7 @@ function ScorePost({ game, glyphs, helped }: { game: GameState; glyphs: number[]
         score: game.score,
         dateKey: game.dateKey ?? "",
         glyphs,
+        helped,
       },
     })
       .then(() => {

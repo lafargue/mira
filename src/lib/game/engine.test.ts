@@ -268,6 +268,27 @@ describe("ranking view", () => {
     assert.equal(rows[0]?.pending, false);
   });
 
+  it("hides a helped local mark instead of slipping it onto the board", () => {
+    const rows = visibleBoard(
+      [
+        { handle: "Tú", score: 21060, isYou: true },
+        { handle: "Montse Ferrando", score: 8220, isYou: false },
+      ],
+      21060,
+      true,
+      { hideLocal: true, youHandle: "Jaime" },
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.handle, "Montse Ferrando");
+    assert.equal(rows[0]?.rank, 1);
+  });
+
+  it("uses the account name for an unpublished local row", () => {
+    const rows = visibleBoard([], 90, true, { youHandle: "Jaime Martínez" });
+    assert.equal(rows[0]?.handle, "Jaime Martínez");
+    assert.equal(rows[0]?.isYou, true);
+  });
+
   it("prefers the account name on the board", () => {
     assert.equal(displayHandle("Ana López", "user-1"), "Ana López");
     assert.equal(displayHandle("   ", "abc", "Mira-OLD"), "Mira-OLD");

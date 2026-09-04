@@ -159,9 +159,9 @@ export function MiraApp() {
           next.today = {
             dateKey: ended.dateKey,
             score: best,
-            glyphs: keepPrev ? s.today.glyphs : runGlyphs,
+            glyphs: keepPrev ? (s.today?.glyphs ?? runGlyphs) : runGlyphs,
             played: true,
-            helped: keepPrev ? Boolean(s.today.helped) : helped,
+            helped: keepPrev ? Boolean(s.today?.helped) || helped : helped,
           };
         }
         return next;
