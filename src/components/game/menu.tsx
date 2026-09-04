@@ -10,6 +10,7 @@ export function Menu({
   dailyN,
   todayPlayed,
   credits,
+  handle,
   onDaily,
   onEndless,
   onHelp,
@@ -21,6 +22,7 @@ export function Menu({
   dailyN: number;
   todayPlayed: boolean;
   credits: number;
+  handle: string | null;
   onDaily: () => void;
   onEndless: () => void;
   onHelp: () => void;
@@ -41,7 +43,7 @@ export function Menu({
           <HelpCircle className="size-5" strokeWidth={1.75} />
         </button>
         <div className="flex items-center">
-          <AuthChip />
+          <AuthChip handle={handle} />
           <button
             type="button"
             onClick={onSettings}

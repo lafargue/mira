@@ -10,7 +10,7 @@ import { visibleBoard } from "@/lib/game/ranking-view";
 import { cn } from "@/lib/utils";
 import { usePrefs } from "@/lib/prefs-context";
 
-export function Ranking({ onClose }: { onClose: () => void }) {
+export function Ranking({ onClose, handle }: { onClose: () => void; handle: string | null }) {
   const { t } = usePrefs();
   const { user, isPending } = useCurrentUserState();
   const [tab, setTab] = useState<"daily" | "endless">("daily");
@@ -21,7 +21,7 @@ export function Ranking({ onClose }: { onClose: () => void }) {
   const dateKey = utcDateKey();
   const rows = visibleBoard(board?.rows ?? [], localScore, Boolean(user), {
     hideLocal: tab === "daily" && helpedToday,
-    youHandle: user?.displayName ?? undefined,
+    youHandle: handle ?? undefined,
   });
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export function Ranking({ onClose }: { onClose: () => void }) {
   }, [tab, dateKey]);
 
   useEffect(() => {
-    if (isPending || !user) return;
+    if (isPending || !user || !handle) return;
     let cancelled = false;
     const run = async () => {
       const local = loadStats();
@@ -82,7 +82,7 @@ export function Ranking({ onClose }: { onClose: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, [user, isPending, tab, dateKey]);
+  }, [user, isPending, tab, dateKey, handle]);
 
   return (
     <div className="flex flex-1 flex-col">

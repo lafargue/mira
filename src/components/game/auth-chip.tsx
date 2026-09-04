@@ -3,7 +3,7 @@ import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useState } from "react";
 
-export function AuthChip() {
+export function AuthChip({ handle }: { handle?: string | null }) {
   const { user, isPending } = useCurrentUserState();
   const [signingOut, setSigningOut] = useState(false);
 
@@ -22,7 +22,7 @@ export function AuthChip() {
     );
   }
 
-  const label = user.displayName ?? "Tú";
+  const label = handle || "Tú";
   return (
     <div className="flex items-center gap-2">
       <span className="max-w-[7rem] truncate text-xs text-muted">{label}</span>

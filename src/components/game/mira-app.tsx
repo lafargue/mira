@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ClaimHandle } from "@/components/game/claim-handle";
 import { Help, Tutorial } from "@/components/game/help-screens";
 import { Menu } from "@/components/game/menu";
 import { Play } from "@/components/game/play-screen";
@@ -32,6 +33,7 @@ import {
 import { restorePreviewSession } from "@/lib/session-persist";
 import { usePrefs } from "@/lib/prefs-context";
 import { useCredits } from "@/lib/game/use-credits";
+import { useProfile } from "@/lib/game/use-profile";
 import { bestTap } from "@/lib/game/hint";
 
 restorePreviewSession();
@@ -52,6 +54,7 @@ function reducedMotion(): boolean {
 export function MiraApp() {
   const { t } = usePrefs();
   const credits = useCredits();
+  const profile = useProfile();
   const [helped, setHelped] = useState(false);
   const [tipHint, setTipHint] = useState<Pos | null>(null);
   const [screen, setScreen] = useState<Screen>("menu");
@@ -283,14 +286,26 @@ export function MiraApp() {
   const todayPlayed = stats.today?.dateKey === dateKey;
   const dailyN = dailyNumber(dateKey);
 
+  const waitHandle = profile.signedIn && !profile.ready;
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-      {screen === "menu" ? (
+      {waitHandle ? (
+        <div className="flex flex-1 items-center justify-center" aria-hidden="true">
+          <div className="h-12 w-48 animate-pulse rounded-xl bg-surface" />
+        </div>
+      ) : null}
+      {profile.needsClaim ? (
+        <ClaimHandle suggested={profile.suggested} onCheck={profile.check} onSave={profile.save} />
+      ) : null}
+
+      {screen === "menu" && !profile.needsClaim && !waitHandle ? (
         <Menu
           stats={stats}
           dailyN={dailyN}
           todayPlayed={todayPlayed}
           credits={credits.balance}
+          handle={profile.handle}
           onDaily={() => start("daily")}
           onEndless={() => start("endless")}
           onHelp={() => setScreen("help")}
@@ -305,7 +320,7 @@ export function MiraApp() {
         />
       ) : null}
 
-      {screen === "help" ? (
+      {screen === "help" && !profile.needsClaim && !waitHandle ? (
         <Help
           onClose={() => {
             persist({ seenHowTo: true, seenTutorial: true });
@@ -314,18 +329,23 @@ export function MiraApp() {
         />
       ) : null}
 
-      {screen === "ranking" ? <Ranking onClose={() => setScreen("menu")} /> : null}
-      {screen === "settings" ? (
+      {screen === "ranking" && !profile.needsClaim && !waitHandle ? (
+        <Ranking onClose={() => setScreen("menu")} handle={profile.handle} />
+      ) : null}
+      {screen === "settings" && !profile.needsClaim && !waitHandle ? (
         <Settings
           onClose={() => setScreen("menu")}
           credits={credits.balance}
           signedIn={credits.signedIn}
           busy={credits.busy}
           onBuy={credits.buy}
+          handle={profile.handle}
+          onCheckHandle={profile.check}
+          onSaveHandle={profile.save}
         />
       ) : null}
 
-      {screen === "play" && game && tutorial ? (
+      {screen === "play" && game && tutorial && !profile.needsClaim && !waitHandle ? (
         <Tutorial
           onBack={() => {
             setTutorial(false);
@@ -340,7 +360,7 @@ export function MiraApp() {
         />
       ) : null}
 
-      {screen === "play" && game && !tutorial ? (
+      {screen === "play" && game && !tutorial && !profile.needsClaim && !waitHandle ? (
         <Play
           game={game}
           stats={stats}

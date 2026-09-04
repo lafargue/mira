@@ -151,6 +151,7 @@ async function createPgliteSql(): Promise<Sql> {
       import: "default",
       eager: true,
     }) as Record<string, string>;
+    // New files in migrations/ are picked up when this module reloads.
     const doneRows = await pg.query<{ name: string }>(
       "select name from _migrations",
     );

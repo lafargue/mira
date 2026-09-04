@@ -19,15 +19,16 @@ export function fallbackHandle(userId: string): string {
   return `Mira-${n}`;
 }
 
-/** Prefer the account name; else the stored handle; else a stable Mira-XXXX code. */
+/** Prefer the claimed handle; else a stored username; never a Google full name. */
 export function displayHandle(
-  name: string | null | undefined,
+  profileHandle: string | null | undefined,
   userId: string,
   stored = "",
 ): string {
-  const n = (name ?? "").trim().replace(/\s+/g, " ");
-  if (n) return n.length > 24 ? `${n.slice(0, 23)}…` : n;
-  if (stored.trim()) return stored.trim();
+  const p = (profileHandle ?? "").trim();
+  if (p) return p.length > 16 ? `${p.slice(0, 15)}…` : p;
+  const s = stored.trim();
+  if (s && !/\s/.test(s) && s.length <= 16) return s;
   return fallbackHandle(userId);
 }
 

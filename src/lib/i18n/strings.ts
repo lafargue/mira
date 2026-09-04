@@ -124,6 +124,20 @@ export type Messages = {
   payAdded: string;
   shopNeedAccount: string;
   gatewayTitle: string;
+  handleTitle: string;
+  handleBody: string;
+  handleHint: string;
+  handleSave: string;
+  handleTaken: string;
+  handleInvalid: string;
+  handleReserved: string;
+  handleTry: string;
+  handleOk: string;
+  handleYours: string;
+  handleChecking: string;
+  handleCurrent: string;
+  handleChange: string;
+  handleChangeHint: string;
 };
 
 const es: Messages = {
@@ -163,7 +177,7 @@ const es: Messages = {
   langFr: "Français",
   langDe: "Deutsch",
   loginTitle: "Entra para el ranking",
-  loginBody: "Juega sin cuenta. Para subir tu marca y ver a los demás, entra con Google o X.",
+  loginBody: "Juega sin cuenta. Para subir tu marca eliges un nombre único. No publicamos el de Google.",
   continueWith: "Continuar con",
   authOff: "El acceso está desactivado.",
   backToPlay: "Volver a jugar",
@@ -250,6 +264,20 @@ const es: Messages = {
   payAdded: "+{n} créditos",
   shopNeedAccount: "Entra con tu cuenta para recargar.",
   gatewayTitle: "Pasarela",
+  handleTitle: "Tu nombre en Mira",
+  handleBody: "Así te verán en el ranking. No publicamos el de Google.",
+  handleHint: "3–16 caracteres. Empieza por letra. Letras, números, _ y -.",
+  handleSave: "Guardar",
+  handleTaken: "Ese nombre ya está en uso.",
+  handleInvalid: "Ese nombre no vale.",
+  handleReserved: "Ese nombre está reservado.",
+  handleTry: "Prueba con uno de estos",
+  handleOk: "Disponible.",
+  handleYours: "Es el tuyo.",
+  handleChecking: "Comprobando…",
+  handleCurrent: "Nombre de usuario",
+  handleChange: "Cambiar nombre",
+  handleChangeHint: "Único en Mira. El ranking se actualiza al guardar.",
 };
 
 const en: Messages = {
@@ -284,7 +312,7 @@ const en: Messages = {
   language: "Language",
   languageHint: "Changes the words. Combo names stay as they are.",
   loginTitle: "Sign in for the ranking",
-  loginBody: "Play without an account. To post your mark and see others, sign in with Google or X.",
+  loginBody: "Play without an account. To post your mark you pick a unique name. We don’t publish your Google name.",
   continueWith: "Continue with",
   authOff: "Sign-in is off.",
   backToPlay: "Back to play",
@@ -317,6 +345,20 @@ const en: Messages = {
   payAdded: "+{n} credits",
   shopNeedAccount: "Sign in to top up.",
   gatewayTitle: "Checkout",
+  handleTitle: "Your name on Mira",
+  handleBody: "This is how you’ll appear on the ranking. We don’t publish your Google name.",
+  handleHint: "3–16 characters. Start with a letter. Letters, numbers, _ and -.",
+  handleSave: "Save",
+  handleTaken: "That name is taken.",
+  handleInvalid: "That name isn’t valid.",
+  handleReserved: "That name is reserved.",
+  handleTry: "Try one of these",
+  handleOk: "Available.",
+  handleYours: "That’s yours.",
+  handleChecking: "Checking…",
+  handleCurrent: "Username",
+  handleChange: "Change name",
+  handleChangeHint: "Unique on Mira. The ranking updates when you save.",
 };
 
 const fr: Messages = {
@@ -342,6 +384,7 @@ const fr: Messages = {
   themeLight: "Clair",
   language: "Langue",
   languageHint: "Change le texte du jeu. Les noms des coups restent.",
+  loginBody: "Joue sans compte. Pour publier ta marque tu choisis un nom unique. On ne publie pas le nom Google.",
   pressure: "Pression",
   credits: "Crédits",
   tip: "Tip",
@@ -363,6 +406,20 @@ const fr: Messages = {
   payAdded: "+{n} crédits",
   shopNeedAccount: "Entre avec ton compte pour recharger.",
   gatewayTitle: "Paiement",
+  handleTitle: "Ton nom sur Mira",
+  handleBody: "C’est ainsi que tu apparaîtras au classement. On ne publie pas le nom Google.",
+  handleHint: "3–16 caractères. Commence par une lettre. Lettres, chiffres, _ et -.",
+  handleSave: "Enregistrer",
+  handleTaken: "Ce nom est déjà pris.",
+  handleInvalid: "Ce nom n’est pas valable.",
+  handleReserved: "Ce nom est réservé.",
+  handleTry: "Essaie l’un de ceux-ci",
+  handleOk: "Disponible.",
+  handleYours: "C’est le tien.",
+  handleChecking: "Vérification…",
+  handleCurrent: "Nom d’utilisateur",
+  handleChange: "Changer le nom",
+  handleChangeHint: "Unique sur Mira. Le classement se met à jour en enregistrant.",
 };
 
 const de: Messages = {
@@ -388,6 +445,7 @@ const de: Messages = {
   themeLight: "Hell",
   language: "Sprache",
   languageHint: "Ändert den Text. Die Zugnamen bleiben.",
+  loginBody: "Spiel ohne Konto. Für die Rangliste wählst du einen einzigartigen Namen. Dein Google-Name wird nicht veröffentlicht.",
   pressure: "Druck",
   credits: "Guthaben",
   tip: "Tipp",
@@ -409,6 +467,20 @@ const de: Messages = {
   payAdded: "+{n} Guthaben",
   shopNeedAccount: "Melde dich an, um aufzuladen.",
   gatewayTitle: "Kasse",
+  handleTitle: "Dein Name auf Mira",
+  handleBody: "So erscheinst du in der Rangliste. Dein Google-Name wird nicht veröffentlicht.",
+  handleHint: "3–16 Zeichen. Beginnt mit einem Buchstaben. Buchstaben, Zahlen, _ und -.",
+  handleSave: "Speichern",
+  handleTaken: "Dieser Name ist vergeben.",
+  handleInvalid: "Dieser Name gilt nicht.",
+  handleReserved: "Dieser Name ist reserviert.",
+  handleTry: "Versuch einen davon",
+  handleOk: "Frei.",
+  handleYours: "Das ist deiner.",
+  handleChecking: "Prüfen…",
+  handleCurrent: "Benutzername",
+  handleChange: "Namen ändern",
+  handleChangeHint: "Einzigartig auf Mira. Die Rangliste aktualisiert sich beim Speichern.",
 };
 
 export const STRINGS: Record<Locale, Messages> = { es, en, fr, de };

@@ -283,15 +283,16 @@ describe("ranking view", () => {
     assert.equal(rows[0]?.rank, 1);
   });
 
-  it("uses the account name for an unpublished local row", () => {
-    const rows = visibleBoard([], 90, true, { youHandle: "Jaime Martínez" });
-    assert.equal(rows[0]?.handle, "Jaime Martínez");
+  it("uses the claimed handle for an unpublished local row", () => {
+    const rows = visibleBoard([], 90, true, { youHandle: "Jaime" });
+    assert.equal(rows[0]?.handle, "Jaime");
     assert.equal(rows[0]?.isYou, true);
   });
 
-  it("prefers the account name on the board", () => {
-    assert.equal(displayHandle("Ana López", "user-1"), "Ana López");
-    assert.equal(displayHandle("   ", "abc", "Mira-OLD"), "Mira-OLD");
+  it("prefers the claimed handle and hides Google full names", () => {
+    assert.equal(displayHandle("ana", "user-1"), "ana");
+    assert.equal(displayHandle(null, "abc", "Mira-OLD"), "Mira-OLD");
+    assert.equal(displayHandle("   ", "abc", "Jaime Martínez"), fallbackHandle("abc"));
     assert.match(fallbackHandle("abc"), /^Mira-/);
   });
 });

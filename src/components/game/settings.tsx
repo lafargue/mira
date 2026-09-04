@@ -1,9 +1,11 @@
 import { ArrowLeft, Check, Monitor, Moon, Sun, Wand2 } from "lucide-react";
 import { useRef } from "react";
 import { CreditShop } from "@/components/game/credit-shop";
+import { HandleForm } from "@/components/game/handle-form";
 import { usePrefs } from "@/lib/prefs-context";
 import { LOCALES, THEMES, type Locale, type Theme } from "@/lib/prefs";
 import type { BuyResult, PackId } from "@/lib/game/packs";
+import type { SetHandleResult } from "@/lib/game/profile";
 import { TIP_COST } from "@/lib/game/wallet";
 import { cn } from "@/lib/utils";
 
@@ -25,12 +27,18 @@ export function Settings({
   signedIn,
   busy,
   onBuy,
+  handle,
+  onCheckHandle,
+  onSaveHandle,
 }: {
   onClose: () => void;
   credits: number;
   signedIn: boolean;
   busy: boolean;
   onBuy: (packId: PackId) => Promise<BuyResult>;
+  handle: string | null;
+  onCheckHandle: (value: string) => Promise<SetHandleResult>;
+  onSaveHandle: (value: string) => Promise<SetHandleResult>;
 }) {
   const { t, theme, locale, setTheme, setLocale } = usePrefs();
   const themeRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -81,6 +89,22 @@ export function Settings({
         </button>
         <h2 className="font-display text-2xl tracking-tight">{t.settings}</h2>
       </header>
+
+      {signedIn ? (
+        <section className="mt-8" aria-labelledby="mira-handle">
+          <h3 id="mira-handle" className="font-medium text-fg">
+            {t.handleChange}
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{t.handleChangeHint}</p>
+          <HandleForm
+            initial={handle ?? ""}
+            current={handle}
+            submitLabel={t.handleSave}
+            onCheck={onCheckHandle}
+            onSave={onSaveHandle}
+          />
+        </section>
+      ) : null}
 
       <section className="mt-8" aria-labelledby="mira-wallet">
         <h3 id="mira-wallet" className="font-medium text-fg">

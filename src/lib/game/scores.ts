@@ -43,12 +43,13 @@ const submitInput = z.object({
   helped: z.boolean().optional(),
 });
 
-async function handleFor(userId: string): Promise<string> {
+async function handleFor(userId: string): Promise<string | null> {
   const sql = await getSql();
-  const rows = await sql<{ name: string | null }>`
-    select "name" as name from "user" where id = ${userId} limit 1
+  const rows = await sql<{ handle: string | null }>`
+    select handle from mira_profiles where user_id = ${userId} limit 1
   `;
-  return displayHandle(rows[0]?.name, userId);
+  const handle = rows[0]?.handle?.trim();
+  return handle ? handle : null;
 }
 
 export const submitScore = createServerFn({ method: "POST" })
@@ -63,6 +64,9 @@ export const submitScore = createServerFn({ method: "POST" })
       return { ok: false as const, score: 0, skipped: "helped" as const };
     }
     const handle = await handleFor(context.userId);
+    if (!handle) {
+      return { ok: false as const, score: 0, skipped: "no-handle" as const };
+    }
     const glyphs = JSON.stringify(data.glyphs);
     const sql = await getSql();
     await sql`
@@ -131,17 +135,17 @@ export const listBoard = createServerFn({ method: "POST" })
       where mode = ${data.mode} and date_key = ${dateKey}
     `;
     const total = counted[0]?.n ?? 0;
-    const top = await sql<{ user_id: string; handle: string; score: number; user_name: string | null }>`
-      select s.user_id, s.handle, s.score, u."name" as user_name
+    const top = await sql<{ user_id: string; handle: string; score: number; profile_handle: string | null }>`
+      select s.user_id, s.handle, s.score, p.handle as profile_handle
       from mira_scores s
-      left join "user" u on u.id = s.user_id
+      left join mira_profiles p on p.user_id = s.user_id
       where s.mode = ${data.mode} and s.date_key = ${dateKey}
       order by s.score desc, s.updated_at asc
       limit 20
     `;
     return {
       rows: top.map((r) => ({
-        handle: displayHandle(r.user_name, r.user_id, r.handle),
+        handle: displayHandle(r.profile_handle, r.user_id, r.handle),
         score: r.score,
         isYou: Boolean(userId) && r.user_id === userId,
       })),
