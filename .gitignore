@@ -7,6 +7,8 @@ dist/
 .cache/
 .grok/
 screenshots/
+attachments/
+artifacts/
 artifacts/
 .data/
 *.log
