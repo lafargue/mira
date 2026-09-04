@@ -30,10 +30,8 @@ export function ResultCard({
   onBack: () => void;
 }) {
   const { t } = usePrefs();
-  const record =
-    game.mode === "daily"
-      ? (stats.today?.score ?? game.score) >= stats.bestDaily && game.score > 0
-      : game.score >= stats.bestEndless && game.score > 0;
+  const best = game.mode === "daily" ? stats.bestDaily : stats.bestEndless;
+  const record = game.score > 0 && game.score >= best && !(game.mode === "daily" && helped);
   const shownGlyphs = stats.today?.glyphs?.length ? stats.today.glyphs : glyphs;
 
   return (
@@ -89,7 +87,7 @@ export function ResultCard({
 function ScorePost({ game, glyphs, helped }: { game: GameState; glyphs: number[]; helped: boolean }) {
   const { t } = usePrefs();
   const { user, isPending } = useCurrentUserState();
-  const [status, setStatus] = useState<"idle" | "ok" | "err" | "helped">("idle");
+  const [status, setStatus] = useState<"idle" | "ok" | "err" | "helped" | "kept">("idle");
 
   useEffect(() => {
     if (game.mode === "daily" && helped) {
@@ -107,8 +105,11 @@ function ScorePost({ game, glyphs, helped }: { game: GameState; glyphs: number[]
         helped,
       },
     })
-      .then(() => {
-        if (!cancelled) setStatus("ok");
+      .then((res) => {
+        if (cancelled) return;
+        if (res.ok && res.score === game.score) setStatus("ok");
+        else if (res.ok || "skipped" in res) setStatus("kept");
+        else setStatus("err");
       })
       .catch(() => {
         if (!cancelled) setStatus("err");
@@ -121,6 +122,7 @@ function ScorePost({ game, glyphs, helped }: { game: GameState; glyphs: number[]
   if (status === "helped") {
     return <p className="text-center text-xs text-muted">{t.tipDailyWarn}</p>;
   }
+  if (status === "kept") return null;
 
   if (isPending) return <div className="h-11 animate-pulse rounded-xl bg-surface-2" />;
 
