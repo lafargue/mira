@@ -17,9 +17,9 @@ describe("displayHandle", () => {
     assert.equal(displayHandle("jaime32", "abc", "Jaime Martínez Lafargue"), "jaime32");
   });
 
-  it("keeps the published score name so the board is not Mira-XXXX (screenshot regression)", () => {
-    assert.equal(displayHandle(null, "u2", "Montse Ferrando"), "Montse Ferrando");
-    assert.equal(displayHandle(null, "abc", "Jaime Martínez Lafargue"), "Jaime Martínez Lafargue");
+  it("hides Google full names until they claim a username", () => {
+    assert.equal(displayHandle(null, "u2", "Montse Ferrando"), fallbackHandle("u2"));
+    assert.equal(displayHandle(null, "abc", "Jaime Martínez Lafargue"), fallbackHandle("abc"));
     assert.equal(displayHandle(null, "abc", "Mira-OLD"), "Mira-OLD");
     assert.equal(displayHandle("   ", "abc", ""), fallbackHandle("abc"));
     assert.match(fallbackHandle("abc"), /^Mira-/);

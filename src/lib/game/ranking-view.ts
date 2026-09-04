@@ -1,4 +1,4 @@
-import { publicHandle } from "./handle.ts";
+import { isPublicHandle, publicHandle } from "./handle.ts";
 import { cleanGlyphsOf, cleanScoreOf, type DailyRecord } from "./save.ts";
 
 export type BoardRow = {
@@ -22,17 +22,13 @@ export function fallbackHandle(userId: string): string {
   return `Mira-${n}`;
 }
 
-/** Claimed alias wins. Otherwise the name already on the score (legacy Google names stay until they pick one). */
+/** Claimed alias only. Google full names stay off the board until they pick one. */
 export function displayHandle(
   profileHandle: string | null | undefined,
   userId: string,
   stored = "",
 ): string {
-  const claimed = publicHandle(profileHandle);
-  if (claimed) return claimed;
-  const published = stored.trim();
-  if (published) return published;
-  return fallbackHandle(userId);
+  return publicHandle(profileHandle) ?? (isPublicHandle(stored) ? stored.trim() : fallbackHandle(userId));
 }
 
 export function looksLikePersonName(raw: string): boolean {

@@ -300,10 +300,10 @@ describe("ranking view", () => {
     assert.equal(rows[0]?.isYou, true);
   });
 
-  it("prefers the claimed handle and keeps a published score name", () => {
+  it("prefers the claimed handle and hides Google full names", () => {
     assert.equal(displayHandle("ana", "user-1"), "ana");
     assert.equal(displayHandle(null, "abc", "Mira-OLD"), "Mira-OLD");
-    assert.equal(displayHandle(null, "abc", "Jaime Martínez Lafargue"), "Jaime Martínez Lafargue");
+    assert.equal(displayHandle(null, "abc", "Jaime Martínez Lafargue"), fallbackHandle("abc"));
     assert.equal(displayHandle("   ", "abc", ""), fallbackHandle("abc"));
     assert.match(fallbackHandle("abc"), /^Mira-/);
   });

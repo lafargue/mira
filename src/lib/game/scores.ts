@@ -50,14 +50,7 @@ async function handleFor(userId: string): Promise<string> {
   const rows = await sql<{ handle: string | null }>`
     select handle from mira_profiles where user_id = ${userId} limit 1
   `;
-  const claimed = publicHandle(rows[0]?.handle ?? null);
-  if (claimed) return claimed;
-  const named = await sql<{ name: string | null }>`
-    select "name" as name from "user" where id = ${userId} limit 1
-  `;
-  const fromGoogle = (named[0]?.name ?? "").trim();
-  if (fromGoogle) return fromGoogle;
-  return fallbackHandle(userId);
+  return publicHandle(rows[0]?.handle ?? null) ?? fallbackHandle(userId);
 }
 
 async function emailFor(userId: string): Promise<string | null> {
