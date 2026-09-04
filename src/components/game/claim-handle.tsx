@@ -23,7 +23,9 @@ export function ClaimHandle({
       <p className="mt-2 max-w-[22rem] text-sm leading-relaxed text-muted">{t.handleBody}</p>
       <HandleForm
         initial={suggested}
-        submitLabel={t.handleSave}
+        submitLabel={t.handleContinue}
+        fieldLabel={t.handleCurrent}
+        autoFocus
         onCheck={onCheck}
         onSave={onSave}
       />

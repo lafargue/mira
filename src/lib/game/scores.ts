@@ -2,6 +2,7 @@ import { createMiddleware, createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { publicHandle } from "@/lib/game/handle";
 import { displayHandle } from "@/lib/game/ranking-view";
 
 export type BoardRow = {
@@ -48,8 +49,8 @@ async function handleFor(userId: string): Promise<string | null> {
   const rows = await sql<{ handle: string | null }>`
     select handle from mira_profiles where user_id = ${userId} limit 1
   `;
-  const handle = rows[0]?.handle?.trim();
-  return handle ? handle : null;
+  const handle = publicHandle(rows[0]?.handle ?? null);
+  return handle;
 }
 
 export const submitScore = createServerFn({ method: "POST" })

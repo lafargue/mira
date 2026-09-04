@@ -138,6 +138,7 @@ export type Messages = {
   handleCurrent: string;
   handleChange: string;
   handleChangeHint: string;
+  handleContinue: string;
 };
 
 const es: Messages = {
@@ -177,7 +178,7 @@ const es: Messages = {
   langFr: "Français",
   langDe: "Deutsch",
   loginTitle: "Entra para el ranking",
-  loginBody: "Juega sin cuenta. Para subir tu marca eliges un nombre único. No publicamos el de Google.",
+  loginBody: "Juega sin cuenta. Para subir tu marca eliges un nombre único. El de Google no se publica.",
   continueWith: "Continuar con",
   authOff: "El acceso está desactivado.",
   backToPlay: "Volver a jugar",
@@ -265,7 +266,7 @@ const es: Messages = {
   shopNeedAccount: "Entra con tu cuenta para recargar.",
   gatewayTitle: "Pasarela",
   handleTitle: "Tu nombre en Mira",
-  handleBody: "Así te verán en el ranking. No publicamos el de Google.",
+  handleBody: "Así te verán en el ranking. El nombre de Google se queda en privado.",
   handleHint: "3–16 caracteres. Empieza por letra. Letras, números, _ y -.",
   handleSave: "Guardar",
   handleTaken: "Ese nombre ya está en uso.",
@@ -278,6 +279,7 @@ const es: Messages = {
   handleCurrent: "Nombre de usuario",
   handleChange: "Cambiar nombre",
   handleChangeHint: "Único en Mira. El ranking se actualiza al guardar.",
+  handleContinue: "Continuar",
 };
 
 const en: Messages = {
@@ -312,7 +314,7 @@ const en: Messages = {
   language: "Language",
   languageHint: "Changes the words. Combo names stay as they are.",
   loginTitle: "Sign in for the ranking",
-  loginBody: "Play without an account. To post your mark you pick a unique name. We don’t publish your Google name.",
+  loginBody: "Play without an account. To post your mark you pick a unique name. Your Google name stays private.",
   continueWith: "Continue with",
   authOff: "Sign-in is off.",
   backToPlay: "Back to play",
@@ -346,7 +348,7 @@ const en: Messages = {
   shopNeedAccount: "Sign in to top up.",
   gatewayTitle: "Checkout",
   handleTitle: "Your name on Mira",
-  handleBody: "This is how you’ll appear on the ranking. We don’t publish your Google name.",
+  handleBody: "This is how you’ll appear on the ranking. Your Google name stays private.",
   handleHint: "3–16 characters. Start with a letter. Letters, numbers, _ and -.",
   handleSave: "Save",
   handleTaken: "That name is taken.",
@@ -359,6 +361,7 @@ const en: Messages = {
   handleCurrent: "Username",
   handleChange: "Change name",
   handleChangeHint: "Unique on Mira. The ranking updates when you save.",
+  handleContinue: "Continue",
 };
 
 const fr: Messages = {
@@ -407,7 +410,7 @@ const fr: Messages = {
   shopNeedAccount: "Entre avec ton compte pour recharger.",
   gatewayTitle: "Paiement",
   handleTitle: "Ton nom sur Mira",
-  handleBody: "C’est ainsi que tu apparaîtras au classement. On ne publie pas le nom Google.",
+  handleBody: "C’est ainsi que tu apparaîtras au classement. Le nom Google reste privé.",
   handleHint: "3–16 caractères. Commence par une lettre. Lettres, chiffres, _ et -.",
   handleSave: "Enregistrer",
   handleTaken: "Ce nom est déjà pris.",
@@ -420,6 +423,7 @@ const fr: Messages = {
   handleCurrent: "Nom d’utilisateur",
   handleChange: "Changer le nom",
   handleChangeHint: "Unique sur Mira. Le classement se met à jour en enregistrant.",
+  handleContinue: "Continuer",
 };
 
 const de: Messages = {
@@ -468,7 +472,7 @@ const de: Messages = {
   shopNeedAccount: "Melde dich an, um aufzuladen.",
   gatewayTitle: "Kasse",
   handleTitle: "Dein Name auf Mira",
-  handleBody: "So erscheinst du in der Rangliste. Dein Google-Name wird nicht veröffentlicht.",
+  handleBody: "So erscheinst du in der Rangliste. Dein Google-Name bleibt privat.",
   handleHint: "3–16 Zeichen. Beginnt mit einem Buchstaben. Buchstaben, Zahlen, _ und -.",
   handleSave: "Speichern",
   handleTaken: "Dieser Name ist vergeben.",
@@ -481,6 +485,7 @@ const de: Messages = {
   handleCurrent: "Benutzername",
   handleChange: "Namen ändern",
   handleChangeHint: "Einzigartig auf Mira. Die Rangliste aktualisiert sich beim Speichern.",
+  handleContinue: "Weiter",
 };
 
 export const STRINGS: Record<Locale, Messages> = { es, en, fr, de };

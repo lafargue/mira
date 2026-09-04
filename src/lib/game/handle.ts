@@ -35,7 +35,7 @@ export const RESERVED_HANDLES = new Set([
   "you",
 ]);
 
-const HANDLE_RE = new RegExp(`^[A-Za-z][A-Za-z0-9_-]{${HANDLE_MIN - 1},${HANDLE_MAX - 1}}$`);
+const HANDLE_RE = new RegExp(`^[\\p{L}][\\p{L}\\p{N}_-]{${HANDLE_MIN - 1},${HANDLE_MAX - 1}}$`, "u");
 
 export type HandleReason = "invalid" | "reserved" | "taken";
 
@@ -52,27 +52,49 @@ export function foldHandle(raw: string): string {
 
 export function parseHandle(raw: string): ParsedHandle {
   const display = raw.trim();
+  if (display.length < HANDLE_MIN || display.length > HANDLE_MAX) {
+    return { ok: false, reason: "invalid" };
+  }
   if (!HANDLE_RE.test(display)) return { ok: false, reason: "invalid" };
-  const lc = display.toLowerCase();
+  const lc = foldHandle(display);
+  if (lc.length < HANDLE_MIN || !/^[a-z]/.test(lc)) return { ok: false, reason: "invalid" };
   if (RESERVED_HANDLES.has(lc)) return { ok: false, reason: "reserved" };
   return { ok: true, display, lc };
 }
 
-/** First-login seed from the Google/X display name. Never returns a reserved word. */
-export function slugFromName(name: string): string {
-  const words = foldHandle(name)
+/** True only for a claimed public alias — never a Google full name. */
+export function isPublicHandle(raw: string | null | undefined): boolean {
+  return parseHandle(raw ?? "").ok;
+}
+
+export function publicHandle(raw: string | null | undefined): string | null {
+  const parsed = parseHandle(raw ?? "");
+  return parsed.ok ? parsed.display : null;
+}
+
+function nameWords(name: string): string[] {
+  return foldHandle(name)
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/)
-    .filter(Boolean);
+    .filter((w) => w.length >= 2);
+}
+
+function clipStem(stem: string): string {
+  let out = stem.replace(/[^a-z0-9]/g, "");
+  if (!/^[a-z]/.test(out)) out = `m${out}`;
+  out = out.slice(0, HANDLE_MAX);
+  if (out.length < HANDLE_MIN) out = (out + "player").slice(0, HANDLE_MAX);
+  if (RESERVED_HANDLES.has(out)) out = `${out}1`.slice(0, HANDLE_MAX);
+  return out;
+}
+
+/** First-login seed from the Google/X display name. Never a reserved word. */
+export function slugFromName(name: string): string {
+  const words = nameWords(name);
   let stem = words[0] ?? "";
   if (stem.length < HANDLE_MIN) stem = words.join("");
-  stem = stem.replace(/[^a-z0-9]/g, "");
-  if (!/^[a-z]/.test(stem)) stem = `m${stem}`;
-  stem = stem.slice(0, HANDLE_MAX);
-  if (stem.length < HANDLE_MIN) stem = (stem + "player").slice(0, HANDLE_MAX);
-  if (RESERVED_HANDLES.has(stem)) stem = `${stem}1`.slice(0, HANDLE_MAX);
-  const parsed = parseHandle(stem);
+  const parsed = parseHandle(clipStem(stem));
   return parsed.ok ? parsed.display : "player";
 }
 
@@ -84,15 +106,49 @@ function pushCandidate(out: string[], raw: string, skip: Set<string>) {
   out.push(parsed.display);
 }
 
-/** Up to `limit` alternatives. `taken` is lowercase. */
-export function suggestHandles(desired: string, taken: Set<string>, limit = 3): string[] {
-  const skip = new Set(taken);
+/**
+ * Up to `limit` alternatives. `taken` is lowercase/folded.
+ * `fullName` (Google name) seeds first+last combos so suggestions feel personal.
+ */
+export function suggestHandles(
+  desired: string,
+  taken: Set<string>,
+  limit = 3,
+  fullName = "",
+): string[] {
+  const skip = new Set<string>();
+  for (const t of taken) skip.add(foldHandle(t));
+  const wanted = parseHandle(desired);
+  if (wanted.ok) skip.add(wanted.lc);
+
   const stem = slugFromName(desired);
-  const short = stem.slice(0, Math.max(HANDLE_MIN, HANDLE_MAX - 3));
+  const words = nameWords(fullName || desired);
+  const first = words[0] ?? stem;
+  const last = words.length > 1 ? words[words.length - 1] : "";
+  const short = stem.slice(0, Math.max(HANDLE_MIN, HANDLE_MAX - 4));
+
+  const extras = [
+    last.length >= HANDLE_MIN ? last : "",
+    ...words.slice(1).filter((w) => w.length >= HANDLE_MIN && w !== last),
+    first && last ? `${first[0]}${last}` : "",
+    first && last ? `${first}_${last[0]}` : "",
+    first && last ? `${first}${last.slice(0, 4)}` : "",
+    `${stem}2`,
+    `${stem}3`,
+    `${short}_mira`,
+    `${short}_halo`,
+    last ? `${last}2` : "",
+    `${stem}7`,
+    `${stem}11`,
+    `${stem}21`,
+    `${stem}32`,
+    `${short}99`,
+  ];
+
   const out: string[] = [];
-  const extras = [`${stem}2`, `${stem}3`, `${short}_mira`, `${short}_halo`, `${stem}11`, `${stem}21`, `${short}7`];
   for (const c of extras) {
     if (out.length >= limit) break;
+    if (!c) continue;
     pushCandidate(out, c.slice(0, HANDLE_MAX), skip);
   }
   for (let n = 4; n <= 99 && out.length < limit; n += 1) {

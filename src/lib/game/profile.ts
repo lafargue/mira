@@ -2,7 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
-import { HANDLE_MAX, parseHandle, slugFromName, suggestHandles } from "@/lib/game/handle";
+import {
+  HANDLE_MAX,
+  foldHandle,
+  parseHandle,
+  publicHandle,
+  slugFromName,
+  suggestHandles,
+} from "@/lib/game/handle";
 
 export type SetHandleResult =
   | { ok: true; handle: string; unchanged?: boolean }
@@ -18,28 +25,35 @@ function isUniqueViolation(err: unknown): boolean {
   return e.code === "23505" || /unique|duplicate/i.test(e.message ?? "");
 }
 
-async function takenSet(desired: string, userId: string): Promise<Set<string>> {
-  const sql = await getSql();
-  const pool = suggestHandles(desired, new Set(), 12);
-  if (pool.length === 0) return new Set();
-  const rows = await sql.query<{ handle_lc: string }>(
-    `select handle_lc from mira_profiles where handle_lc = any($1::text[]) and user_id <> $2`,
-    [pool.map((h) => h.toLowerCase()), userId],
-  );
-  return new Set(rows.map((r) => r.handle_lc));
-}
-
-async function alternatives(desired: string, userId: string): Promise<string[]> {
-  const taken = await takenSet(desired, userId);
-  return suggestHandles(desired, taken, 3);
-}
-
 async function nameFor(userId: string): Promise<string> {
   const sql = await getSql();
   const rows = await sql<{ name: string | null }>`
     select "name" as name from "user" where id = ${userId} limit 1
   `;
   return rows[0]?.name ?? "";
+}
+
+async function takenSet(desired: string, userId: string, seedName: string): Promise<Set<string>> {
+  const sql = await getSql();
+  const parsed = parseHandle(desired);
+  const stem = parsed.ok ? parsed.lc : slugFromName(desired || seedName);
+  const prefix = stem.slice(0, Math.min(Math.max(stem.length, 1), 10));
+  const rows = await sql<{ handle_lc: string }>`
+    select handle_lc from mira_profiles
+    where user_id <> ${userId}
+      and (
+        handle_lc like ${`${prefix}%`}
+        or handle_lc = ${foldHandle(desired)}
+      )
+    limit 80
+  `;
+  return new Set(rows.map((r) => r.handle_lc));
+}
+
+async function alternatives(desired: string, userId: string, seedName?: string): Promise<string[]> {
+  const name = seedName ?? (await nameFor(userId));
+  const taken = await takenSet(desired, userId, name);
+  return suggestHandles(desired || name, taken, 3, name);
 }
 
 export const getMyProfile = createServerFn({ method: "POST" })
@@ -49,9 +63,11 @@ export const getMyProfile = createServerFn({ method: "POST" })
     const rows = await sql<{ handle: string }>`
       select handle from mira_profiles where user_id = ${context.userId} limit 1
     `;
+    const name = await nameFor(context.userId);
     return {
-      handle: rows[0]?.handle ?? null,
-      suggested: slugFromName(await nameFor(context.userId)),
+      handle: publicHandle(rows[0]?.handle ?? null),
+      suggested: slugFromName(name),
+      fullName: name,
     };
   });
 
@@ -59,9 +75,10 @@ export const checkHandle = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((raw: unknown) => handleInput.parse(raw))
   .handler(async ({ context, data }): Promise<SetHandleResult> => {
+    const name = await nameFor(context.userId);
     const parsed = parseHandle(data.handle);
     if (!parsed.ok) {
-      return { ok: false, reason: parsed.reason, suggestions: await alternatives(data.handle, context.userId) };
+      return { ok: false, reason: parsed.reason, suggestions: await alternatives(data.handle, context.userId, name) };
     }
     const sql = await getSql();
     const mine = await sql<{ handle: string; handle_lc: string }>`
@@ -74,7 +91,7 @@ export const checkHandle = createServerFn({ method: "POST" })
       select user_id from mira_profiles where handle_lc = ${parsed.lc} limit 1
     `;
     if (clash[0]) {
-      return { ok: false, reason: "taken", suggestions: await alternatives(parsed.display, context.userId) };
+      return { ok: false, reason: "taken", suggestions: await alternatives(parsed.display, context.userId, name) };
     }
     return { ok: true, handle: parsed.display };
   });
@@ -83,9 +100,10 @@ export const setHandle = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((raw: unknown) => handleInput.parse(raw))
   .handler(async ({ context, data }): Promise<SetHandleResult> => {
+    const name = await nameFor(context.userId);
     const parsed = parseHandle(data.handle);
     if (!parsed.ok) {
-      return { ok: false, reason: parsed.reason, suggestions: await alternatives(data.handle, context.userId) };
+      return { ok: false, reason: parsed.reason, suggestions: await alternatives(data.handle, context.userId, name) };
     }
     const sql = await getSql();
     const mine = await sql<{ handle: string; handle_lc: string }>`
@@ -98,7 +116,7 @@ export const setHandle = createServerFn({ method: "POST" })
       select user_id from mira_profiles where handle_lc = ${parsed.lc} limit 1
     `;
     if (clash[0]) {
-      return { ok: false, reason: "taken", suggestions: await alternatives(parsed.display, context.userId) };
+      return { ok: false, reason: "taken", suggestions: await alternatives(parsed.display, context.userId, name) };
     }
     try {
       await sql`
@@ -111,7 +129,7 @@ export const setHandle = createServerFn({ method: "POST" })
       `;
     } catch (err) {
       if (isUniqueViolation(err)) {
-        return { ok: false, reason: "taken", suggestions: await alternatives(parsed.display, context.userId) };
+        return { ok: false, reason: "taken", suggestions: await alternatives(parsed.display, context.userId, name) };
       }
       throw err;
     }

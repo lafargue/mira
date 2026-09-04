@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { publicHandle } from "@/lib/game/handle";
 import { checkHandle, getMyProfile, setHandle, type SetHandleResult } from "@/lib/game/profile";
 
 export function useProfile() {
@@ -17,7 +18,7 @@ export function useProfile() {
     }
     try {
       const row = await getMyProfile();
-      setLocal(row.handle);
+      setLocal(publicHandle(row.handle));
       setSuggested(row.suggested);
     } catch {
       setLocal(null);
@@ -44,12 +45,14 @@ export function useProfile() {
     return checkHandle({ data: { handle: value } });
   }, []);
 
+  const signedIn = Boolean(user) && !user?.isDevFallback;
+
   return {
     handle,
     suggested,
     ready,
-    signedIn: Boolean(user),
-    needsClaim: Boolean(user) && ready && !handle,
+    signedIn,
+    needsClaim: signedIn && ready && !handle,
     save,
     check,
   };

@@ -22,7 +22,7 @@ export function AuthChip({ handle }: { handle?: string | null }) {
     );
   }
 
-  const label = handle || "Tú";
+  const label = handle ? `@${handle}` : "Tú";
   return (
     <div className="flex items-center gap-2">
       <span className="max-w-[7rem] truncate text-xs text-muted">{label}</span>

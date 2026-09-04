@@ -96,6 +96,9 @@ export function Settings({
             {t.handleChange}
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-muted">{t.handleChangeHint}</p>
+          {handle ? (
+            <p className="mt-3 font-display text-2xl tracking-tight text-fg">@{handle}</p>
+          ) : null}
           <HandleForm
             initial={handle ?? ""}
             current={handle}

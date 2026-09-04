@@ -21,7 +21,7 @@ function Login() {
                 type="button"
                 variant="secondary"
                 className="w-full rounded-xl"
-                onClick={() => void signIn(p.providerId, { callbackURL: "/", errorCallbackURL: "/login" })}
+                onClick={() => void signIn(p.providerId, { callbackURL: "/claim", errorCallbackURL: "/login" })}
               >
                 {t.continueWith} {p.label}
               </Button>

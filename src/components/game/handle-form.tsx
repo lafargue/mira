@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { parseHandle } from "@/lib/game/handle";
+import { foldHandle, parseHandle } from "@/lib/game/handle";
 import type { SetHandleResult } from "@/lib/game/profile";
 import { usePrefs } from "@/lib/prefs-context";
 import { cn } from "@/lib/utils";
@@ -9,12 +9,16 @@ export function HandleForm({
   initial = "",
   current = null,
   submitLabel,
+  fieldLabel,
+  autoFocus = false,
   onCheck,
   onSave,
 }: {
   initial?: string;
   current?: string | null;
   submitLabel: string;
+  fieldLabel?: string;
+  autoFocus?: boolean;
   onCheck: (value: string) => Promise<SetHandleResult>;
   onSave: (value: string) => Promise<SetHandleResult>;
 }) {
@@ -30,13 +34,13 @@ export function HandleForm({
   }, [initial]);
 
   useEffect(() => {
-    const parsed = parseHandle(value);
-    if (!parsed.ok) {
-      setStatus({ ok: false, reason: parsed.reason, suggestions: [] });
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setStatus(null);
       setChecking(false);
       return;
     }
-    if (current && parsed.lc === current.trim().toLowerCase()) {
+    if (current && foldHandle(trimmed) === foldHandle(current) && parseHandle(current).ok) {
       setStatus({ ok: true, handle: current, unchanged: true });
       setChecking(false);
       return;
@@ -44,11 +48,16 @@ export function HandleForm({
     const id = ++gen.current;
     setChecking(true);
     const timer = window.setTimeout(() => {
-      void onCheck(parsed.display).then((res) => {
-        if (gen.current !== id) return;
-        setStatus(res);
-        setChecking(false);
-      });
+      void onCheck(trimmed)
+        .then((res) => {
+          if (gen.current !== id) return;
+          setStatus(res);
+          setChecking(false);
+        })
+        .catch(() => {
+          if (gen.current !== id) return;
+          setChecking(false);
+        });
     }, 280);
     return () => window.clearTimeout(timer);
   }, [value, current, onCheck]);
@@ -86,11 +95,14 @@ export function HandleForm({
       }}
     >
       <label htmlFor="mira-handle-input" className="block">
-        <span className="text-xs font-medium tracking-wide text-subtle uppercase">{t.handleCurrent}</span>
+        <span className="text-xs font-medium tracking-wide text-subtle uppercase">
+          {fieldLabel ?? t.handleCurrent}
+        </span>
         <input
           id="mira-handle-input"
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          autoFocus={autoFocus}
           autoComplete="username"
           autoCapitalize="off"
           autoCorrect="off"

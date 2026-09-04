@@ -1,3 +1,5 @@
+import { isPublicHandle, publicHandle } from "./handle.ts";
+
 export type BoardRow = {
   handle: string;
   score: number;
@@ -19,17 +21,13 @@ export function fallbackHandle(userId: string): string {
   return `Mira-${n}`;
 }
 
-/** Prefer the claimed handle; else a stored username; never a Google full name. */
+/** Prefer the claimed handle. Never a Google full name. */
 export function displayHandle(
   profileHandle: string | null | undefined,
   userId: string,
   stored = "",
 ): string {
-  const p = (profileHandle ?? "").trim();
-  if (p) return p.length > 16 ? `${p.slice(0, 15)}…` : p;
-  const s = stored.trim();
-  if (s && !/\s/.test(s) && s.length <= 16) return s;
-  return fallbackHandle(userId);
+  return publicHandle(profileHandle) ?? (isPublicHandle(stored) ? stored.trim() : fallbackHandle(userId));
 }
 
 /** Merge a local (unpublished) score into the public board so the list is never blank. */
@@ -51,7 +49,8 @@ export function visibleBoard(
     return out.map((r, i) => ({ ...r, rank: i + 1 }));
   }
   if (localScore <= 0 || out.some((r) => r.isYou)) return out;
-  const you = (opts.youHandle ?? "").trim() || "Tú";
+  const claimed = publicHandle(opts.youHandle);
+  const you = claimed ?? "Tú";
   const row: VisibleRow = {
     rank: 0,
     handle: you,

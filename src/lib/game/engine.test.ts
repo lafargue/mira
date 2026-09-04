@@ -293,6 +293,7 @@ describe("ranking view", () => {
     assert.equal(displayHandle("ana", "user-1"), "ana");
     assert.equal(displayHandle(null, "abc", "Mira-OLD"), "Mira-OLD");
     assert.equal(displayHandle("   ", "abc", "Jaime Martínez"), fallbackHandle("abc"));
+    assert.equal(displayHandle("Jaime Martínez Lafargue", "abc"), fallbackHandle("abc"));
     assert.match(fallbackHandle("abc"), /^Mira-/);
   });
 });
