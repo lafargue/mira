@@ -286,15 +286,8 @@ export function MiraApp() {
   const todayPlayed = stats.today?.dateKey === dateKey;
   const dailyN = dailyNumber(dateKey);
 
-  const waitHandle = profile.signedIn && !profile.ready;
-
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-      {waitHandle ? (
-        <div className="flex flex-1 items-center justify-center" aria-hidden="true">
-          <div className="h-12 w-48 animate-pulse rounded-xl bg-surface" />
-        </div>
-      ) : null}
       {profile.needsClaim ? (
         <ClaimHandle
           suggested={profile.suggested}
@@ -304,7 +297,7 @@ export function MiraApp() {
         />
       ) : null}
 
-      {screen === "menu" && !profile.needsClaim && !waitHandle ? (
+      {screen === "menu" && !profile.needsClaim ? (
         <Menu
           stats={stats}
           dailyN={dailyN}
@@ -325,7 +318,7 @@ export function MiraApp() {
         />
       ) : null}
 
-      {screen === "help" && !profile.needsClaim && !waitHandle ? (
+      {screen === "help" && !profile.needsClaim ? (
         <Help
           onClose={() => {
             persist({ seenHowTo: true, seenTutorial: true });
@@ -334,10 +327,10 @@ export function MiraApp() {
         />
       ) : null}
 
-      {screen === "ranking" && !profile.needsClaim && !waitHandle ? (
+      {screen === "ranking" && !profile.needsClaim ? (
         <Ranking onClose={() => setScreen("menu")} handle={profile.handle} />
       ) : null}
-      {screen === "settings" && !profile.needsClaim && !waitHandle ? (
+      {screen === "settings" && !profile.needsClaim ? (
         <Settings
           onClose={() => setScreen("menu")}
           credits={credits.balance}
@@ -350,7 +343,7 @@ export function MiraApp() {
         />
       ) : null}
 
-      {screen === "play" && game && tutorial && !profile.needsClaim && !waitHandle ? (
+      {screen === "play" && game && tutorial && !profile.needsClaim ? (
         <Tutorial
           onBack={() => {
             setTutorial(false);
@@ -365,7 +358,7 @@ export function MiraApp() {
         />
       ) : null}
 
-      {screen === "play" && game && !tutorial && !profile.needsClaim && !waitHandle ? (
+      {screen === "play" && game && !tutorial && !profile.needsClaim ? (
         <Play
           game={game}
           stats={stats}
