@@ -10,8 +10,10 @@ export function useCredits() {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const userId = user?.id ?? null;
+
   const refresh = useCallback(async () => {
-    if (user) {
+    if (userId) {
       try {
         const wallet = await getWallet();
         setBalance(wallet.balance);
@@ -22,13 +24,10 @@ export function useCredits() {
       setBalance(loadLocalWallet().balance);
     }
     setReady(true);
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    if (isPending) {
-      setBalance(loadLocalWallet().balance);
-      return;
-    }
+    if (isPending) return;
     void refresh();
   }, [isPending, refresh]);
 

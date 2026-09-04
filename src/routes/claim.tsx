@@ -38,13 +38,11 @@ function ClaimPage() {
     );
   }
 
+  const showForm = Boolean(user) && profile.ready && !profile.handle;
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-      {!profile.ready || isPending || profile.handle ? (
-        <div className="flex flex-1 items-center justify-center" aria-hidden="true">
-          <div className="h-12 w-48 animate-pulse rounded-xl bg-surface" />
-        </div>
-      ) : (
+      {showForm ? (
         <ClaimHandle
           suggested={profile.suggested}
           suggestions={profile.suggestions}
@@ -55,6 +53,10 @@ function ClaimPage() {
             return res;
           }}
         />
+      ) : (
+        <div className="flex flex-1 items-center justify-center" aria-hidden="true">
+          <div className="h-12 w-48 animate-pulse rounded-xl bg-surface" />
+        </div>
       )}
     </main>
   );
