@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { STARTING_CREDITS, TIP_COST, isOwnerEmail, type CreditSpend } from "@/lib/game/wallet";
+import { packById, PACK_IDS, type BuyResult } from "@/lib/game/packs";
 
 const spendInput = z.object({
   reason: z.enum(["tip"]),
@@ -37,12 +38,17 @@ async function ensureWallet(userId: string): Promise<number> {
   return refillOwnerIfNeeded(userId, balance);
 }
 
-async function refillOwnerIfNeeded(userId: string, balance: number): Promise<number> {
+async function emailFor(userId: string): Promise<string | null> {
   const sql = await getSql();
   const owner = await sql<{ email: string | null }>`
     select email from "user" where id = ${userId} limit 1
   `;
-  if (!isOwnerEmail(owner[0]?.email)) return balance;
+  return owner[0]?.email ?? null;
+}
+
+async function refillOwnerIfNeeded(userId: string, balance: number): Promise<number> {
+  if (!isOwnerEmail(await emailFor(userId))) return balance;
+  const sql = await getSql();
 
   const already = await sql<{ n: number }>`
     select count(*)::int as n from mira_ledger
@@ -98,4 +104,44 @@ export const spendCredit = createServerFn({ method: "POST" })
       values (${context.userId}, ${-cost}, ${data.reason})
     `;
     return { ok: true, balance: updated[0].balance };
+  });
+
+const buyInput = z.object({
+  packId: z.enum(PACK_IDS),
+});
+
+/**
+ * Start a pack purchase.
+ * Owner account simulates a successful payment (no card).
+ * Everyone else is sent to the checkout stub — the real gateway is not wired yet.
+ */
+export const buyPack = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((raw: unknown) => buyInput.parse(raw))
+  .handler(async ({ context, data }): Promise<BuyResult> => {
+    const pack = packById(data.packId);
+    if (!pack) return { ok: false, reason: "unknown", packId: data.packId };
+    await ensureWallet(context.userId);
+    if (!isOwnerEmail(await emailFor(context.userId))) {
+      return { ok: false, reason: "checkout", packId: pack.id };
+    }
+    const sql = await getSql();
+    const updated = await sql<{ balance: number }>`
+      update mira_wallet
+      set balance = balance + ${pack.credits}, updated_at = now()
+      where user_id = ${context.userId}
+      returning balance
+    `;
+    if (!updated[0]) return { ok: false, reason: "unknown", packId: pack.id };
+    await sql`
+      insert into mira_ledger (user_id, amount, reason)
+      values (${context.userId}, ${pack.credits}, 'purchase')
+    `;
+    return {
+      ok: true,
+      mode: "simulated",
+      packId: pack.id,
+      credits: pack.credits,
+      balance: updated[0].balance,
+    };
   });

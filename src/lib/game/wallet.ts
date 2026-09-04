@@ -3,7 +3,7 @@ export const TIP_COST = 1;
 /** Test refill applies only to this signed-in account. */
 export const OWNER_EMAIL = "jaime32@gmail.com";
 
-export const CREDIT_REASONS = ["grant", "tip", "refill"] as const;
+export const CREDIT_REASONS = ["grant", "tip", "refill", "purchase"] as const;
 export type CreditReason = (typeof CREDIT_REASONS)[number];
 
 export type CreditSpend = {

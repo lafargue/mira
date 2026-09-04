@@ -61,7 +61,8 @@ export function Play({
 }) {
   const { t } = usePrefs();
   const remaining = DAILY_MOVES - game.moves;
-  const canTip = !game.over && !busy && !tipBusy && !hint && credits >= TIP_COST;
+  const empty = credits < TIP_COST;
+  const canTip = !game.over && !busy && !tipBusy && !hint;
   return (
     <div className="flex flex-1 flex-col gap-4">
       <header className="flex items-center gap-2">
@@ -84,7 +85,7 @@ export function Play({
           onClick={onTip}
           disabled={!canTip}
           className="flex h-11 min-w-11 items-center justify-center gap-1 rounded-lg px-2 text-muted transition-colors duration-150 hover:text-fg disabled:opacity-40"
-          aria-label={canTip ? `${t.tip}, ${TIP_COST}` : t.tipNeed}
+          aria-label={canTip && !empty ? `${t.tip}, ${TIP_COST}` : t.shopOpen}
         >
           <Wand2 className="size-5" strokeWidth={1.75} />
           <span className="text-xs tabular-nums">{credits}</span>
@@ -138,7 +139,7 @@ export function Play({
         <div className="mt-auto flex flex-col gap-3">
           <Button variant="secondary" className="w-full rounded-xl" onClick={onTip} disabled={!canTip}>
             <Wand2 className="size-4" strokeWidth={1.75} />
-            {t.tip} · {TIP_COST} · {credits} {t.credits}
+            {empty ? t.shopOpen : `${t.tip} · ${TIP_COST} · ${credits} ${t.credits}`}
           </Button>
           <p className="text-center text-sm leading-relaxed text-muted">{coach ?? t.holdHint}</p>
         </div>

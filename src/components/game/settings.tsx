@@ -1,7 +1,9 @@
-import { useRef } from "react";
 import { ArrowLeft, Check, Monitor, Moon, Sun, Wand2 } from "lucide-react";
+import { useRef } from "react";
+import { CreditShop } from "@/components/game/credit-shop";
 import { usePrefs } from "@/lib/prefs-context";
 import { LOCALES, THEMES, type Locale, type Theme } from "@/lib/prefs";
+import type { BuyResult, PackId } from "@/lib/game/packs";
 import { TIP_COST } from "@/lib/game/wallet";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +19,19 @@ const THEME_SWATCH: Record<Theme, { bg: string; accent: string }> = {
   light: { bg: "#f4f3ef", accent: "#e25c6a" },
 };
 
-export function Settings({ onClose, credits }: { onClose: () => void; credits: number }) {
+export function Settings({
+  onClose,
+  credits,
+  signedIn,
+  busy,
+  onBuy,
+}: {
+  onClose: () => void;
+  credits: number;
+  signedIn: boolean;
+  busy: boolean;
+  onBuy: (packId: PackId) => Promise<BuyResult>;
+}) {
   const { t, theme, locale, setTheme, setLocale } = usePrefs();
   const themeRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const localeRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -81,6 +95,14 @@ export function Settings({ onClose, credits }: { onClose: () => void; credits: n
           <span className="font-display text-2xl tabular-nums text-fg">{credits}</span>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-subtle">{t.grantHint}</p>
+      </section>
+
+      <section className="mt-8" aria-labelledby="mira-shop">
+        <h3 id="mira-shop" className="font-medium text-fg">
+          {t.shopTitle}
+        </h3>
+        <p className="mt-1 text-sm leading-relaxed text-muted">{t.shopHint}</p>
+        <CreditShop signedIn={signedIn} busy={busy} onBuy={onBuy} />
       </section>
 
       <section className="mt-8" aria-labelledby="mira-appearance">

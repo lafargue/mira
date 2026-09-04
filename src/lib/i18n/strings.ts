@@ -111,6 +111,19 @@ export type Messages = {
   helpedMark: string;
   helpedHint: string;
   grantHint: string;
+  shopTitle: string;
+  shopHint: string;
+  shopOpen: string;
+  packBest: string;
+  packUnit: string;
+  packSave: string;
+  pay: string;
+  paySoon: string;
+  paySoonBody: string;
+  paySimulated: string;
+  payAdded: string;
+  shopNeedAccount: string;
+  gatewayTitle: string;
 };
 
 const es: Messages = {
@@ -224,6 +237,19 @@ const es: Messages = {
   helpedMark: "Con ayuda",
   helpedHint: "El Tip ilumina el cambio de muro que hace un Mira, no la cruz más gorda. En Diario esa marca no se publica.",
   grantHint: "Saldo de prueba al empezar. El Tip cuesta 1. En Diario, con ayuda no se publica.",
+  shopTitle: "Recargar",
+  shopHint: "Un Tip cuesta 1. Halo es cinco veces Pulso por tres veces el precio.",
+  shopOpen: "Recargar",
+  packBest: "El que compensa",
+  packUnit: "/ crédito",
+  packSave: "−{n}%",
+  pay: "Pagar {price}",
+  paySoon: "El cobro llega pronto",
+  paySoonBody: "La pasarela está lista. Aún no se cobra. No se ha cargado nada.",
+  paySimulated: "Pago simulado",
+  payAdded: "+{n} créditos",
+  shopNeedAccount: "Entra con tu cuenta para recargar.",
+  gatewayTitle: "Pasarela",
 };
 
 const en: Messages = {
@@ -278,6 +304,19 @@ const en: Messages = {
   helpedMark: "Helped",
   helpedHint: "A Tip lights the wall change that makes a Mira, not the fattest cross. On Daily that mark is not published.",
   grantHint: "Starter balance. A Tip costs 1. On Daily, a helped mark is not published.",
+  shopTitle: "Top up",
+  shopHint: "A Tip costs 1. Halo is five times Pulso for three times the price.",
+  shopOpen: "Top up",
+  packBest: "Best value",
+  packUnit: "/ credit",
+  packSave: "−{n}%",
+  pay: "Pay {price}",
+  paySoon: "Charging comes later",
+  paySoonBody: "The checkout is ready. Nothing is charged yet. No payment was taken.",
+  paySimulated: "Simulated payment",
+  payAdded: "+{n} credits",
+  shopNeedAccount: "Sign in to top up.",
+  gatewayTitle: "Checkout",
 };
 
 const fr: Messages = {
@@ -311,6 +350,19 @@ const fr: Messages = {
   helpedMark: "Avec aide",
   helpedHint: "Le Tip éclaire le changement de mur qui fait un Mira, pas la croix la plus grosse. Au quotidien, cette marque n’est pas publiée.",
   grantHint: "Solde d’essai au départ. Un Tip coûte 1. Au quotidien, avec aide, pas de classement.",
+  shopTitle: "Recharger",
+  shopHint: "Un Tip coûte 1. Halo, c’est cinq fois Pulso pour trois fois le prix.",
+  shopOpen: "Recharger",
+  packBest: "Le juste prix",
+  packUnit: "/ crédit",
+  packSave: "−{n}%",
+  pay: "Payer {price}",
+  paySoon: "Le paiement arrive",
+  paySoonBody: "La passerelle est prête. Rien n’est débité pour l’instant.",
+  paySimulated: "Paiement simulé",
+  payAdded: "+{n} crédits",
+  shopNeedAccount: "Entre avec ton compte pour recharger.",
+  gatewayTitle: "Paiement",
 };
 
 const de: Messages = {
@@ -344,6 +396,19 @@ const de: Messages = {
   helpedMark: "Mit Hilfe",
   helpedHint: "Ein Tipp zeigt den Wandwechsel, der ein Mira ergibt, nicht das dickste Kreuz. Im Daily wird die Marke nicht veröffentlicht.",
   grantHint: "Startguthaben. Ein Tipp kostet 1. Im Daily zählt eine geholfen Marke nicht.",
+  shopTitle: "Aufladen",
+  shopHint: "Ein Tipp kostet 1. Halo ist fünfmal Pulso zum dreifachen Preis.",
+  shopOpen: "Aufladen",
+  packBest: "Der sich lohnt",
+  packUnit: "/ Guthaben",
+  packSave: "−{n}%",
+  pay: "{price} zahlen",
+  paySoon: "Zahlung kommt später",
+  paySoonBody: "Die Kasse ist bereit. Es wird noch nichts abgebucht.",
+  paySimulated: "Simulierte Zahlung",
+  payAdded: "+{n} Guthaben",
+  shopNeedAccount: "Melde dich an, um aufzuladen.",
+  gatewayTitle: "Kasse",
 };
 
 export const STRINGS: Record<Locale, Messages> = { es, en, fr, de };

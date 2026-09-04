@@ -13,6 +13,7 @@ describe("wallet rules", () => {
     assert.equal(costFor("tip"), 1);
     assert.equal(costFor("grant"), 0);
     assert.equal(costFor("refill"), 0);
+    assert.equal(costFor("purchase"), 0);
   });
 
   it("only jaime32@gmail.com is the owner account", () => {

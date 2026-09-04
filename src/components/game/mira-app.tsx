@@ -316,7 +316,13 @@ export function MiraApp() {
 
       {screen === "ranking" ? <Ranking onClose={() => setScreen("menu")} /> : null}
       {screen === "settings" ? (
-        <Settings onClose={() => setScreen("menu")} credits={credits.balance} />
+        <Settings
+          onClose={() => setScreen("menu")}
+          credits={credits.balance}
+          signedIn={credits.signedIn}
+          busy={credits.busy}
+          onBuy={credits.buy}
+        />
       ) : null}
 
       {screen === "play" && game && tutorial ? (
@@ -374,6 +380,10 @@ export function MiraApp() {
           onTip={async () => {
             if (!game || game.over || busy || credits.busy) return;
             if (tipHint) return;
+            if (credits.balance < 1) {
+              setScreen("settings");
+              return;
+            }
             const cell = bestTap(game.board);
             if (!cell) return;
             const res = await credits.spend("tip");

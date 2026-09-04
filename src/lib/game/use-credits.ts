@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { getWallet, spendCredit } from "@/lib/game/credits";
+import { buyPack, getWallet, spendCredit } from "@/lib/game/credits";
 import { loadLocalWallet, spendLocal, type CreditSpend } from "@/lib/game/wallet";
+import type { BuyResult, PackId } from "@/lib/game/packs";
 
 export function useCredits() {
   const { user, isPending } = useCurrentUserState();
@@ -53,5 +54,23 @@ export function useCredits() {
     [balance, busy, user],
   );
 
-  return { balance, ready, busy, spend, signedIn: Boolean(user) };
+  const buy = useCallback(
+    async (packId: PackId): Promise<BuyResult> => {
+      if (!user) return { ok: false, reason: "signed-out", packId };
+      if (busy) return { ok: false, reason: "unknown", packId };
+      setBusy(true);
+      try {
+        const res = await buyPack({ data: { packId } });
+        if (res.ok) setBalance(res.balance);
+        return res;
+      } catch {
+        return { ok: false, reason: "unknown", packId };
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, user],
+  );
+
+  return { balance, ready, busy, spend, buy, signedIn: Boolean(user) };
 }
