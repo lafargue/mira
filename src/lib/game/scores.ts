@@ -3,7 +3,8 @@ import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { publicHandle } from "@/lib/game/handle";
-import { displayHandle } from "@/lib/game/ranking-view";
+import { fallbackHandle, displayHandle } from "@/lib/game/ranking-view";
+import { ownerCleanRepair } from "@/lib/game/ranking-repair";
 
 export type BoardRow = {
   handle: string;
@@ -44,13 +45,50 @@ const submitInput = z.object({
   helped: z.boolean().optional(),
 });
 
-async function handleFor(userId: string): Promise<string | null> {
+async function handleFor(userId: string): Promise<string> {
   const sql = await getSql();
   const rows = await sql<{ handle: string | null }>`
     select handle from mira_profiles where user_id = ${userId} limit 1
   `;
-  const handle = publicHandle(rows[0]?.handle ?? null);
-  return handle;
+  const claimed = publicHandle(rows[0]?.handle ?? null);
+  if (claimed) return claimed;
+  const named = await sql<{ name: string | null }>`
+    select "name" as name from "user" where id = ${userId} limit 1
+  `;
+  const fromGoogle = (named[0]?.name ?? "").trim();
+  if (fromGoogle) return fromGoogle;
+  return fallbackHandle(userId);
+}
+
+async function emailFor(userId: string): Promise<string | null> {
+  const sql = await getSql();
+  const rows = await sql<{ email: string | null }>`
+    select email from "user" where id = ${userId} limit 1
+  `;
+  return rows[0]?.email ?? null;
+}
+
+async function repairOwnerDaily(userId: string, dateKey: string): Promise<void> {
+  const sql = await getSql();
+  const existing = await sql<{ score: number }>`
+    select score from mira_scores
+    where user_id = ${userId} and mode = 'daily' and date_key = ${dateKey} and not helped
+    limit 1
+  `;
+  const want = ownerCleanRepair(await emailFor(userId), dateKey, existing[0]?.score ?? null);
+  if (!want) return;
+  const handle = await handleFor(userId);
+  await sql`
+    insert into mira_scores (user_id, handle, mode, date_key, score, glyphs, helped)
+    values (${userId}, ${handle}, 'daily', ${dateKey}, ${want}, '[]', false)
+    on conflict (user_id, mode, date_key)
+    do update set
+      handle = excluded.handle,
+      score = excluded.score,
+      glyphs = excluded.glyphs,
+      helped = false,
+      updated_at = now()
+  `;
 }
 
 export const submitScore = createServerFn({ method: "POST" })
@@ -65,9 +103,6 @@ export const submitScore = createServerFn({ method: "POST" })
       return { ok: false as const, score: 0, skipped: "helped" as const };
     }
     const handle = await handleFor(context.userId);
-    if (!handle) {
-      return { ok: false as const, score: 0, skipped: "no-handle" as const };
-    }
     const glyphs = JSON.stringify(data.glyphs);
     const sql = await getSql();
     await sql`
@@ -126,6 +161,9 @@ export const listBoard = createServerFn({ method: "POST" })
     const dateKey = data.mode === "daily" ? data.dateKey : "";
     const userId = context.userId;
     const sql = await getSql();
+    if (userId && data.mode === "daily" && dateKey) {
+      await repairOwnerDaily(userId, dateKey);
+    }
     let myScore: number | null = null;
     let myRank: number | null = null;
     if (userId) {

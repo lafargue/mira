@@ -52,7 +52,7 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
   }, [tab, dateKey]);
 
   useEffect(() => {
-    if (isPending || !user || !handle) return;
+    if (isPending || !user) return;
     let cancelled = false;
     const run = async () => {
       const local = loadStats();
