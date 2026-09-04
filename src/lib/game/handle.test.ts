@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isPublicHandle, parseHandle, slugFromName, suggestHandles } from "./handle.ts";
+import { isPublicHandle, nextFreeHandle, parseHandle, slugFromName, suggestHandles } from "./handle.ts";
 
 describe("parseHandle", () => {
   it("accepts 3–16 latin handles that start with a letter", () => {
@@ -64,5 +64,28 @@ describe("suggestHandles", () => {
     assert.equal(out.length, 3);
     assert.ok(out.includes("martinez") || out.some((h) => h.toLowerCase().includes("martinez") || h.toLowerCase().includes("lafargue")));
     assert.ok(!out.some((h) => taken.has(h.toLowerCase())));
+  });
+});
+
+describe("nextFreeHandle", () => {
+  it("keeps the desired name when it is free", () => {
+    const pick = nextFreeHandle("halo", new Set(), "Jaime Martínez Lafargue");
+    assert.equal(pick.seed, "halo");
+    assert.equal(pick.suggestions.length, 3);
+    assert.ok(!pick.suggestions.includes("halo"));
+  });
+
+  it("never seeds a taken name and offers last-name alternatives", () => {
+    const taken = new Set(["jaime", "jaime2", "jaime3"]);
+    const pick = nextFreeHandle("jaime", taken, "Jaime Martínez Lafargue");
+    assert.notEqual(pick.seed.toLowerCase(), "jaime");
+    assert.ok(!taken.has(pick.seed.toLowerCase()));
+    assert.equal(parseHandle(pick.seed).ok, true);
+    assert.ok(pick.suggestions.every((h) => parseHandle(h).ok && !taken.has(h.toLowerCase()) && h.toLowerCase() !== pick.seed.toLowerCase()));
+    assert.ok(
+      pick.seed.toLowerCase().includes("martinez") ||
+        pick.seed.toLowerCase().includes("lafargue") ||
+        pick.suggestions.some((h) => /martinez|lafargue/.test(h.toLowerCase())),
+    );
   });
 });

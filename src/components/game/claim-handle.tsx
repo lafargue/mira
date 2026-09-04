@@ -6,10 +6,12 @@ import { useState } from "react";
 
 export function ClaimHandle({
   suggested,
+  suggestions = [],
   onCheck,
   onSave,
 }: {
   suggested: string;
+  suggestions?: string[];
   onCheck: (value: string) => Promise<SetHandleResult>;
   onSave: (value: string) => Promise<SetHandleResult>;
 }) {
@@ -26,6 +28,8 @@ export function ClaimHandle({
         submitLabel={t.handleContinue}
         fieldLabel={t.handleCurrent}
         autoFocus
+        inputId="mira-claim-handle"
+        seedSuggestions={suggestions}
         onCheck={onCheck}
         onSave={onSave}
       />

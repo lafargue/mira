@@ -156,3 +156,24 @@ export function suggestHandles(
   }
   return out.slice(0, limit);
 }
+
+/** Seed the first-login field with a free handle and up to 3 backups. */
+export function nextFreeHandle(
+  desired: string,
+  taken: Set<string>,
+  fullName = "",
+): { seed: string; suggestions: string[] } {
+  const skip = new Set<string>();
+  for (const t of taken) skip.add(foldHandle(t));
+  const parsed = parseHandle(desired);
+  const pool = suggestHandles(desired || fullName, skip, 4, fullName);
+  if (parsed.ok && !skip.has(parsed.lc)) {
+    return { seed: parsed.display, suggestions: pool.slice(0, 3) };
+  }
+  const seed = pool[0] ?? slugFromName(fullName || desired);
+  const seedLc = foldHandle(seed);
+  return {
+    seed,
+    suggestions: pool.filter((h) => foldHandle(h) !== seedLc).slice(0, 3),
+  };
+}

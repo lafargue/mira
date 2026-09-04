@@ -103,6 +103,7 @@ export function Settings({
             initial={handle ?? ""}
             current={handle}
             submitLabel={t.handleSave}
+            inputId="mira-settings-handle"
             onCheck={onCheckHandle}
             onSave={onSaveHandle}
           />

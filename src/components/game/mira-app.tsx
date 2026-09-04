@@ -296,7 +296,12 @@ export function MiraApp() {
         </div>
       ) : null}
       {profile.needsClaim ? (
-        <ClaimHandle suggested={profile.suggested} onCheck={profile.check} onSave={profile.save} />
+        <ClaimHandle
+          suggested={profile.suggested}
+          suggestions={profile.suggestions}
+          onCheck={profile.check}
+          onSave={profile.save}
+        />
       ) : null}
 
       {screen === "menu" && !profile.needsClaim && !waitHandle ? (

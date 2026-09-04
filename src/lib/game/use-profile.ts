@@ -7,12 +7,14 @@ export function useProfile() {
   const { user, isPending } = useCurrentUserState();
   const [handle, setLocal] = useState<string | null>(null);
   const [suggested, setSuggested] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!user) {
       setLocal(null);
       setSuggested("");
+      setSuggestions([]);
       setReady(true);
       return;
     }
@@ -20,8 +22,10 @@ export function useProfile() {
       const row = await getMyProfile();
       setLocal(publicHandle(row.handle));
       setSuggested(row.suggested);
+      setSuggestions(row.suggestions ?? []);
     } catch {
       setLocal(null);
+      setSuggestions([]);
     }
     setReady(true);
   }, [user]);
@@ -37,7 +41,10 @@ export function useProfile() {
 
   const save = useCallback(async (value: string): Promise<SetHandleResult> => {
     const res = await setHandle({ data: { handle: value } });
-    if (res.ok) setLocal(res.handle);
+    if (res.ok) {
+      setLocal(res.handle);
+      setSuggested(res.handle);
+    }
     return res;
   }, []);
 
@@ -50,6 +57,7 @@ export function useProfile() {
   return {
     handle,
     suggested,
+    suggestions,
     ready,
     signedIn,
     needsClaim: signedIn && ready && !handle,

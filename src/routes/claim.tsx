@@ -47,6 +47,7 @@ function ClaimPage() {
       ) : (
         <ClaimHandle
           suggested={profile.suggested}
+          suggestions={profile.suggestions}
           onCheck={profile.check}
           onSave={async (value) => {
             const res = await profile.save(value);

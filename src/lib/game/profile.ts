@@ -5,6 +5,7 @@ import { getSql } from "@/lib/db";
 import {
   HANDLE_MAX,
   foldHandle,
+  nextFreeHandle,
   parseHandle,
   publicHandle,
   slugFromName,
@@ -64,9 +65,12 @@ export const getMyProfile = createServerFn({ method: "POST" })
       select handle from mira_profiles where user_id = ${context.userId} limit 1
     `;
     const name = await nameFor(context.userId);
+    const handle = publicHandle(rows[0]?.handle ?? null);
+    const pick = nextFreeHandle(handle ?? slugFromName(name), await takenSet(handle ?? slugFromName(name), context.userId, name), name);
     return {
-      handle: publicHandle(rows[0]?.handle ?? null),
-      suggested: slugFromName(name),
+      handle,
+      suggested: handle ?? pick.seed,
+      suggestions: pick.suggestions,
       fullName: name,
     };
   });

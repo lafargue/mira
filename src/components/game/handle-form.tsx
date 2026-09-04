@@ -5,12 +5,18 @@ import type { SetHandleResult } from "@/lib/game/profile";
 import { usePrefs } from "@/lib/prefs-context";
 import { cn } from "@/lib/utils";
 
+function fill(template: string, name: string) {
+  return template.replaceAll("{name}", name);
+}
+
 export function HandleForm({
   initial = "",
   current = null,
   submitLabel,
   fieldLabel,
   autoFocus = false,
+  inputId = "mira-handle-input",
+  seedSuggestions = [],
   onCheck,
   onSave,
 }: {
@@ -19,6 +25,8 @@ export function HandleForm({
   submitLabel: string;
   fieldLabel?: string;
   autoFocus?: boolean;
+  inputId?: string;
+  seedSuggestions?: string[];
   onCheck: (value: string) => Promise<SetHandleResult>;
   onSave: (value: string) => Promise<SetHandleResult>;
 }) {
@@ -27,7 +35,9 @@ export function HandleForm({
   const [status, setStatus] = useState<SetHandleResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const gen = useRef(0);
+  const prevValue = useRef(value);
 
   useEffect(() => {
     setValue(initial);
@@ -35,6 +45,10 @@ export function HandleForm({
 
   useEffect(() => {
     const trimmed = value.trim();
+    if (prevValue.current !== value) {
+      prevValue.current = value;
+      setSaved(false);
+    }
     if (!trimmed) {
       setStatus(null);
       setChecking(false);
@@ -64,23 +78,32 @@ export function HandleForm({
 
   const canSave = Boolean(status?.ok && !status.unchanged) && !saving && !checking;
   const reason = status && !status.ok ? status.reason : null;
-  const suggestions = status && !status.ok ? status.suggestions : [];
+  const liveSuggestions = status && !status.ok ? status.suggestions : [];
+  const typed = value.trim();
+  const suggestions =
+    liveSuggestions.length > 0
+      ? liveSuggestions
+      : foldHandle(typed) === foldHandle(initial)
+        ? seedSuggestions
+        : [];
 
-  const message = !value.trim()
-    ? t.handleHint
-    : checking
-      ? t.handleChecking
-      : reason === "taken"
-        ? t.handleTaken
-        : reason === "reserved"
-          ? t.handleReserved
-          : reason === "invalid"
-            ? t.handleInvalid
-            : status?.ok && status.unchanged
-              ? t.handleYours
-              : status?.ok
-                ? t.handleOk
-                : t.handleHint;
+  const message = saved
+    ? t.handleSaved
+    : !typed
+      ? t.handleHint
+      : checking
+        ? t.handleChecking
+        : reason === "taken"
+          ? fill(t.handleTaken, typed)
+          : reason === "reserved"
+            ? t.handleReserved
+            : reason === "invalid"
+              ? t.handleInvalid
+              : status?.ok && status.unchanged
+                ? t.handleYours
+                : status?.ok
+                  ? t.handleOk
+                  : t.handleHint;
 
   return (
     <form
@@ -90,16 +113,23 @@ export function HandleForm({
         if (!canSave || !status?.ok) return;
         setSaving(true);
         void onSave(status.handle)
-          .then((res) => setStatus(res))
+          .then((res) => {
+            if (res.ok) {
+              setStatus({ ok: true, handle: res.handle, unchanged: true });
+              setSaved(true);
+            } else {
+              setStatus(res);
+            }
+          })
           .finally(() => setSaving(false));
       }}
     >
-      <label htmlFor="mira-handle-input" className="block">
+      <label htmlFor={inputId} className="block">
         <span className="text-xs font-medium tracking-wide text-subtle uppercase">
           {fieldLabel ?? t.handleCurrent}
         </span>
         <input
-          id="mira-handle-input"
+          id={inputId}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           autoFocus={autoFocus}
@@ -109,14 +139,17 @@ export function HandleForm({
           spellCheck={false}
           maxLength={16}
           className="mt-2 h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm text-fg placeholder:text-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg/40"
-          placeholder={initial || "jaime"}
+          placeholder={t.handlePlaceholder}
           aria-invalid={Boolean(reason)}
+          aria-describedby={`${inputId}-status`}
         />
       </label>
       <p
+        id={`${inputId}-status`}
+        aria-live="polite"
         className={cn(
           "mt-2 text-sm leading-relaxed",
-          reason ? "text-danger" : status?.ok && !status.unchanged ? "text-fg" : "text-muted",
+          reason ? "text-danger" : saved || (status?.ok && !status.unchanged) ? "text-fg" : "text-muted",
         )}
       >
         {message}
