@@ -71,13 +71,21 @@ export const submitScore = createServerFn({ method: "POST" })
     const glyphs = JSON.stringify(data.glyphs);
     const sql = await getSql();
     await sql`
-      insert into mira_scores (user_id, handle, mode, date_key, score, glyphs)
-      values (${context.userId}, ${handle}, ${data.mode}, ${dateKey}, ${data.score}, ${glyphs})
+      insert into mira_scores (user_id, handle, mode, date_key, score, glyphs, helped)
+      values (${context.userId}, ${handle}, ${data.mode}, ${dateKey}, ${data.score}, ${glyphs}, false)
       on conflict (user_id, mode, date_key)
       do update set
         handle = excluded.handle,
-        score = greatest(mira_scores.score, excluded.score),
-        glyphs = case when excluded.score >= mira_scores.score then excluded.glyphs else mira_scores.glyphs end,
+        score = case
+          when mira_scores.helped then excluded.score
+          else greatest(mira_scores.score, excluded.score)
+        end,
+        glyphs = case
+          when mira_scores.helped then excluded.glyphs
+          when excluded.score >= mira_scores.score then excluded.glyphs
+          else mira_scores.glyphs
+        end,
+        helped = false,
         updated_at = now()
     `;
     const mine = await sql<{ score: number }>`
@@ -98,7 +106,10 @@ export const withdrawHelpedDaily = createServerFn({ method: "POST" })
     const sql = await getSql();
     await sql`
       delete from mira_scores
-      where user_id = ${context.userId} and mode = 'daily' and date_key = ${data.dateKey}
+      where user_id = ${context.userId}
+        and mode = 'daily'
+        and date_key = ${data.dateKey}
+        and helped = true
     `;
     return { ok: true as const };
   });
@@ -120,27 +131,27 @@ export const listBoard = createServerFn({ method: "POST" })
     if (userId) {
       const mine = await sql<{ score: number }>`
         select score from mira_scores
-        where user_id = ${userId} and mode = ${data.mode} and date_key = ${dateKey}
+        where user_id = ${userId} and mode = ${data.mode} and date_key = ${dateKey} and not helped
       `;
       myScore = mine[0]?.score ?? null;
       if (myScore !== null) {
         const rankRows = await sql<{ rank: number }>`
           select count(*)::int + 1 as rank from mira_scores
-          where mode = ${data.mode} and date_key = ${dateKey} and score > ${myScore}
+          where mode = ${data.mode} and date_key = ${dateKey} and not helped and score > ${myScore}
         `;
         myRank = rankRows[0]?.rank ?? 1;
       }
     }
     const counted = await sql<{ n: number }>`
       select count(*)::int as n from mira_scores
-      where mode = ${data.mode} and date_key = ${dateKey}
+      where mode = ${data.mode} and date_key = ${dateKey} and not helped
     `;
     const total = counted[0]?.n ?? 0;
     const top = await sql<{ user_id: string; handle: string; score: number; profile_handle: string | null }>`
       select s.user_id, s.handle, s.score, p.handle as profile_handle
       from mira_scores s
       left join mira_profiles p on p.user_id = s.user_id
-      where s.mode = ${data.mode} and s.date_key = ${dateKey}
+      where s.mode = ${data.mode} and s.date_key = ${dateKey} and not s.helped
       order by s.score desc, s.updated_at asc
       limit 20
     `;

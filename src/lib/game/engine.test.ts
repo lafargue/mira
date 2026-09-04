@@ -268,19 +268,30 @@ describe("ranking view", () => {
     assert.equal(rows[0]?.pending, false);
   });
 
-  it("hides a helped local mark instead of slipping it onto the board", () => {
+  it("does not inject a helped local mark when hideLocal is set", () => {
+    const rows = visibleBoard([{ handle: "Mira-QR7G", score: 8220, isYou: false }], 21060, true, {
+      hideLocal: true,
+      youHandle: "Jaime",
+    });
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0]?.handle, "Mira-QR7G");
+    assert.ok(!rows.some((r) => r.score === 21060));
+  });
+
+  it("keeps a published clean isYou row when the local best used help", () => {
     const rows = visibleBoard(
       [
-        { handle: "Tú", score: 21060, isYou: true },
-        { handle: "Montse Ferrando", score: 8220, isYou: false },
+        { handle: "Jaime", score: 13760, isYou: true },
+        { handle: "Mira-QR7G", score: 8220, isYou: false },
       ],
       21060,
       true,
       { hideLocal: true, youHandle: "Jaime" },
     );
-    assert.equal(rows.length, 1);
-    assert.equal(rows[0]?.handle, "Montse Ferrando");
-    assert.equal(rows[0]?.rank, 1);
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0]?.handle, "Jaime");
+    assert.equal(rows[0]?.score, 13760);
+    assert.ok(!rows.some((r) => r.score === 21060));
   });
 
   it("uses the claimed handle for an unpublished local row", () => {

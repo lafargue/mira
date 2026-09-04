@@ -7,6 +7,9 @@ export type DailyRecord = {
   glyphs: number[];
   played: boolean;
   helped?: boolean;
+  /** Best unhelped run today. Published. Independent of `score` (which may be a helped personal best). */
+  cleanScore?: number;
+  cleanGlyphs?: number[];
 };
 
 export type Stats = {
@@ -74,4 +77,51 @@ export function streakAfterPlay(stats: Stats, dateKey: string): number {
   const diff = (cur.getTime() - prev.getTime()) / 86400000;
   if (diff === 1) return stats.streak + 1;
   return 1;
+}
+
+export function cleanScoreOf(today: DailyRecord | null | undefined): number {
+  if (!today?.played) return 0;
+  if (typeof today.cleanScore === "number") return today.cleanScore;
+  return today.helped ? 0 : today.score;
+}
+
+export function cleanGlyphsOf(today: DailyRecord | null | undefined): number[] {
+  if (!today?.played) return [];
+  if (today.cleanGlyphs?.length) return today.cleanGlyphs;
+  if (!today.helped) return today.glyphs ?? [];
+  return [];
+}
+
+/** Fold a finished daily run into today's record. Helped personal bests never erase a clean publishable score. */
+export function applyDailyFinish(
+  prev: DailyRecord | null | undefined,
+  dateKey: string,
+  score: number,
+  glyphs: number[],
+  helped: boolean,
+): DailyRecord {
+  const same = prev?.dateKey === dateKey ? prev : null;
+  const prevScore = same?.score ?? 0;
+  const prevClean = cleanScoreOf(same);
+  const prevCleanGlyphs = cleanGlyphsOf(same);
+
+  const cleanScore = helped ? prevClean : Math.max(prevClean, score);
+  const cleanGlyphs = helped ? prevCleanGlyphs : score >= prevClean ? glyphs : prevCleanGlyphs;
+
+  const nextScore = Math.max(prevScore, score);
+  const keepPrev = prevScore > score;
+  let nextHelped: boolean;
+  if (score > prevScore) nextHelped = helped;
+  else if (score === prevScore) nextHelped = helped ? Boolean(same?.helped) : false;
+  else nextHelped = Boolean(same?.helped);
+
+  return {
+    dateKey,
+    score: nextScore,
+    glyphs: keepPrev ? (same?.glyphs ?? glyphs) : glyphs,
+    played: true,
+    helped: nextHelped,
+    cleanScore,
+    cleanGlyphs,
+  };
 }

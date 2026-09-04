@@ -19,7 +19,7 @@ import {
   type PulseResult,
 } from "@/lib/game/engine";
 import { dailyNumber, dailySeed, utcDateKey } from "@/lib/game/rng";
-import { loadStats, saveStats, streakAfterPlay, type Stats } from "@/lib/game/save";
+import { applyDailyFinish, loadStats, saveStats, streakAfterPlay, type Stats } from "@/lib/game/save";
 import { shareOrCopy, shareText } from "@/lib/game/share";
 import {
   playEvolve,
@@ -155,17 +155,8 @@ export function MiraApp() {
         } else if (ended.dateKey) {
           next.streak = streakAfterPlay(s, ended.dateKey);
           next.lastDaily = ended.dateKey;
-          const prevScore = s.today?.dateKey === ended.dateKey ? s.today.score : 0;
-          const keepPrev = prevScore > ended.score && s.today;
-          const best = Math.max(prevScore, ended.score);
-          next.bestDaily = Math.max(s.bestDaily, best);
-          next.today = {
-            dateKey: ended.dateKey,
-            score: best,
-            glyphs: keepPrev ? (s.today?.glyphs ?? runGlyphs) : runGlyphs,
-            played: true,
-            helped: keepPrev ? Boolean(s.today?.helped) || helped : helped,
-          };
+          next.today = applyDailyFinish(s.today, ended.dateKey, ended.score, runGlyphs, helped);
+          next.bestDaily = Math.max(s.bestDaily, next.today.score);
         }
         return next;
       });

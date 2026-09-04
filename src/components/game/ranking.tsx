@@ -6,7 +6,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listBoard, submitScore, withdrawHelpedDaily, type BoardPayload } from "@/lib/game/scores";
 import { utcDateKey } from "@/lib/game/rng";
 import { loadStats } from "@/lib/game/save";
-import { visibleBoard } from "@/lib/game/ranking-view";
+import { dailySyncPlan, rankingHeadline, visibleBoard, youTagLabel } from "@/lib/game/ranking-view";
 import { cn } from "@/lib/utils";
 import { usePrefs } from "@/lib/prefs-context";
 
@@ -22,6 +22,12 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
   const rows = visibleBoard(board?.rows ?? [], localScore, Boolean(user), {
     hideLocal: tab === "daily" && helpedToday,
     youHandle: handle ?? undefined,
+  });
+  const headline = rankingHeadline({
+    myRank: board?.myRank,
+    myScore: board?.myScore ?? null,
+    localScore,
+    helpedToday: tab === "daily" && helpedToday,
   });
 
   useEffect(() => {
@@ -51,18 +57,21 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
     const run = async () => {
       const local = loadStats();
       try {
-        if (tab === "daily" && local.today?.played && local.today.helped) {
-          await withdrawHelpedDaily({ data: { dateKey, helped: true } });
-        } else if (tab === "daily" && local.today?.played && local.today.score > 0 && !local.today.helped) {
-          await submitScore({
-            data: {
-              mode: "daily",
-              score: local.today.score,
-              dateKey,
-              glyphs: local.today.glyphs ?? [],
-              helped: false,
-            },
-          });
+        if (tab === "daily") {
+          const plan = dailySyncPlan(local.today, dateKey);
+          if (plan.action === "withdraw") {
+            await withdrawHelpedDaily({ data: { dateKey, helped: true } });
+          } else if (plan.action === "submit") {
+            await submitScore({
+              data: {
+                mode: "daily",
+                score: plan.score,
+                dateKey,
+                glyphs: plan.glyphs,
+                helped: false,
+              },
+            });
+          }
         }
         if (tab === "endless" && local.bestEndless > 0) {
           await submitScore({
@@ -121,7 +130,7 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
         </button>
       </div>
 
-      {board?.myRank && !(tab === "daily" && helpedToday) ? (
+      {headline === "place" && board?.myRank ? (
         <p className="mt-5 text-center text-sm text-muted">
           {t.yourPlace}: <span className="tabular-nums text-fg">#{board.myRank}</span>
           {board.total > 1 ? (
@@ -134,10 +143,10 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
             <span className="tabular-nums"> · {board.myScore.toLocaleString("es")} pts</span>
           ) : null}
         </p>
-      ) : localScore > 0 ? (
+      ) : headline === "helped-mark" || headline === "local-mark" ? (
         <p className="mt-5 text-center text-sm text-muted">
           {t.yourMark}: <span className="tabular-nums text-fg">{localScore.toLocaleString("es")} pts</span>
-          {tab === "daily" && helpedToday ? (
+          {headline === "helped-mark" ? (
             <span> · {t.helpedMark}</span>
           ) : !user ? (
             <span> · {t.signInToPublish}</span>
@@ -148,6 +157,11 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
           {tab === "daily" ? t.rankingEmptyDaily : t.rankingEmptyEndless}
         </p>
       )}
+      {headline === "place" && tab === "daily" && helpedToday && localScore > (board?.myScore ?? 0) ? (
+        <p className="mt-1 text-center text-xs text-subtle">
+          {t.yourMark}: {localScore.toLocaleString("es")} pts · {t.helpedMark}
+        </p>
+      ) : null}
 
       {error === "load" && rows.length === 0 ? (
         <p className="mt-8 text-center text-sm text-muted">No se pudo cargar el ranking.</p>
@@ -206,8 +220,7 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
 }
 
 function youTag(handle: string, isYou: boolean, pending: boolean, you: string, local: string) {
-  if (!isYou) return null;
-  const tag = pending ? local : you;
-  if (handle.trim().toLowerCase() === tag.trim().toLowerCase()) return null;
+  const tag = youTagLabel(handle, isYou, pending, you, local);
+  if (!tag) return null;
   return <span className="ml-2 text-xs font-normal text-muted">{tag}</span>;
 }
