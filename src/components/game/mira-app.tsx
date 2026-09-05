@@ -20,6 +20,8 @@ import {
 } from "@/lib/game/engine";
 import { dailyNumber, dailySeed, utcDateKey } from "@/lib/game/rng";
 import { applyDailyFinish, loadStats, saveStats, streakAfterPlay, type Stats } from "@/lib/game/save";
+import { dailySyncPlan } from "@/lib/game/ranking-view";
+import { submitScore } from "@/lib/game/scores";
 import { shareOrCopy, shareText } from "@/lib/game/share";
 import {
   playEvolve,
@@ -148,22 +150,47 @@ export function MiraApp() {
 
   const finishGame = useCallback(
     (ended: GameState, runGlyphs: number[]) => {
-      setStats((s) => {
-        const next = { ...s, games: s.games + 1, bestCombo: Math.max(s.bestCombo, ended.bestCombo) };
-        if (ended.mode === "endless") {
-          next.bestEndless = Math.max(s.bestEndless, ended.score);
-        } else if (ended.dateKey) {
-          next.streak = streakAfterPlay(s, ended.dateKey);
-          next.lastDaily = ended.dateKey;
-          next.today = applyDailyFinish(s.today, ended.dateKey, ended.score, runGlyphs, helped);
-          next.bestDaily = Math.max(s.bestDaily, next.today.score);
+      if (ended.mode === "daily" && ended.dateKey) {
+        const today = applyDailyFinish(stats.today, ended.dateKey, ended.score, runGlyphs, helped);
+        setStats((s) => ({
+          ...s,
+          games: s.games + 1,
+          bestCombo: Math.max(s.bestCombo, ended.bestCombo),
+          streak: streakAfterPlay(s, ended.dateKey!),
+          lastDaily: ended.dateKey!,
+          today,
+          bestDaily: Math.max(s.bestDaily, today.score),
+        }));
+        const plan = dailySyncPlan(today, ended.dateKey);
+        if (plan.action === "submit") {
+          void submitScore({
+            data: {
+              mode: "daily",
+              score: plan.score,
+              dateKey: ended.dateKey,
+              glyphs: plan.glyphs,
+              helped: false,
+            },
+          }).catch(() => {});
         }
-        return next;
-      });
-      if (ended.mode === "daily") playWin();
-      else playGameOver();
+        playWin();
+        return;
+      }
+      const endlessBest = Math.max(stats.bestEndless, ended.score);
+      setStats((s) => ({
+        ...s,
+        games: s.games + 1,
+        bestCombo: Math.max(s.bestCombo, ended.bestCombo),
+        bestEndless: endlessBest,
+      }));
+      if (endlessBest > 0) {
+        void submitScore({
+          data: { mode: "endless", score: endlessBest, dateKey: "", glyphs: [] },
+        }).catch(() => {});
+      }
+      playGameOver();
     },
-    [helped],
+    [helped, stats.today, stats.bestEndless],
   );
 
   const runPulse = useCallback(

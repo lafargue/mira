@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useSessionReady } from "@/lib/auth/use-current-user";
 import { listBoard, submitScore, type BoardPayload } from "@/lib/game/scores";
 import { utcDateKey } from "@/lib/game/rng";
 import { loadStats } from "@/lib/game/save";
@@ -12,7 +12,7 @@ import { usePrefs } from "@/lib/prefs-context";
 
 export function Ranking({ onClose, handle }: { onClose: () => void; handle: string | null }) {
   const { t } = usePrefs();
-  const { user, isPending } = useCurrentUserState();
+  const { user, isPending } = useSessionReady();
   const [tab, setTab] = useState<"daily" | "endless">("daily");
   const [board, setBoard] = useState<BoardPayload | null>(null);
   const [error, setError] = useState<"load" | null>(null);
@@ -170,7 +170,7 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
           <ol className="mt-4 divide-y divide-border rounded-2xl border border-border bg-surface">
             {rows.map((row) => (
               <li
-                key={`${row.handle}-${row.rank}`}
+                key={`${row.rank}-${row.handle}-${row.score}`}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 text-sm",
                   row.isYou && "bg-surface-2",
@@ -188,6 +188,10 @@ export function Ranking({ onClose, handle }: { onClose: () => void; handle: stri
           {rows.length === 1 && rows[0]?.isYou ? (
             <p className="mt-3 text-center text-xs text-subtle">
               De momento solo está tu marca. Quien juegue hoy y entre con su cuenta aparece aquí.
+            </p>
+          ) : rows.length === 1 ? (
+            <p className="mt-3 text-center text-xs text-subtle">
+              Esta es la lista de hoy. Si has jugado el diario sin ayuda, tu marca se publica al terminar.
             </p>
           ) : tab === "daily" ? (
             <p className="mt-3 text-center text-xs text-subtle">Solo el diario de hoy.</p>

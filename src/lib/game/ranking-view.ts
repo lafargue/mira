@@ -31,6 +31,23 @@ export function displayHandle(
   return publicHandle(profileHandle) ?? (isPublicHandle(stored) ? stored.trim() : fallbackHandle(userId));
 }
 
+/** Map a server board. Every player stays; `isYou` is only the viewer. */
+export function mapBoardRows(
+  rows: Array<{
+    user_id: string;
+    handle: string;
+    score: number;
+    profile_handle: string | null;
+  }>,
+  viewerId: string | null,
+): BoardRow[] {
+  return rows.map((r) => ({
+    handle: displayHandle(r.profile_handle, r.user_id, r.handle),
+    score: r.score,
+    isYou: Boolean(viewerId) && r.user_id === viewerId,
+  }));
+}
+
 export function looksLikePersonName(raw: string): boolean {
   return /\s/.test(raw.trim());
 }

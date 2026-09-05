@@ -3,7 +3,7 @@ import { z } from "zod";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { publicHandle } from "@/lib/game/handle";
-import { fallbackHandle, displayHandle } from "@/lib/game/ranking-view";
+import { fallbackHandle, mapBoardRows } from "@/lib/game/ranking-view";
 import { ownerCleanRepair } from "@/lib/game/ranking-repair";
 
 export type BoardRow = {
@@ -162,36 +162,34 @@ export const listBoard = createServerFn({ method: "POST" })
     if (userId) {
       const mine = await sql<{ score: number }>`
         select score from mira_scores
-        where user_id = ${userId} and mode = ${data.mode} and date_key = ${dateKey} and not helped
+        where user_id = ${userId} and mode = ${data.mode} and date_key = ${dateKey}
+          and coalesce(helped, false) = false
       `;
       myScore = mine[0]?.score ?? null;
       if (myScore !== null) {
         const rankRows = await sql<{ rank: number }>`
           select count(*)::int + 1 as rank from mira_scores
-          where mode = ${data.mode} and date_key = ${dateKey} and not helped and score > ${myScore}
+          where mode = ${data.mode} and date_key = ${dateKey}
+            and coalesce(helped, false) = false and score > ${myScore}
         `;
         myRank = rankRows[0]?.rank ?? 1;
       }
     }
     const counted = await sql<{ n: number }>`
       select count(*)::int as n from mira_scores
-      where mode = ${data.mode} and date_key = ${dateKey} and not helped
+      where mode = ${data.mode} and date_key = ${dateKey} and coalesce(helped, false) = false
     `;
     const total = counted[0]?.n ?? 0;
     const top = await sql<{ user_id: string; handle: string; score: number; profile_handle: string | null }>`
       select s.user_id, s.handle, s.score, p.handle as profile_handle
       from mira_scores s
       left join mira_profiles p on p.user_id = s.user_id
-      where s.mode = ${data.mode} and s.date_key = ${dateKey} and not s.helped
+      where s.mode = ${data.mode} and s.date_key = ${dateKey} and coalesce(s.helped, false) = false
       order by s.score desc, s.updated_at asc
-      limit 20
+      limit 50
     `;
     return {
-      rows: top.map((r) => ({
-        handle: displayHandle(r.profile_handle, r.user_id, r.handle),
-        score: r.score,
-        isYou: Boolean(userId) && r.user_id === userId,
-      })),
+      rows: mapBoardRows(top, userId),
       myScore,
       myRank,
       total,

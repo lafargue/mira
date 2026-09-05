@@ -6,6 +6,7 @@ import {
   displayHandle,
   fallbackHandle,
   looksLikePersonName,
+  mapBoardRows,
   rankingHeadline,
   visibleBoard,
   youTagLabel,
@@ -26,6 +27,55 @@ describe("displayHandle", () => {
     assert.equal(looksLikePersonName("Montse Ferrando"), true);
     assert.equal(looksLikePersonName("jaime32"), false);
     assert.equal(parseHandle("Montse Ferrando").ok, false);
+  });
+});
+
+describe("mapBoardRows", () => {
+  it("keeps Jaime and Montse as two rows; only the viewer is isYou", () => {
+    const rows = mapBoardRows(
+      [
+        { user_id: "id-jaime", handle: "jaime32", score: 13760, profile_handle: "jaime32" },
+        { user_id: "id-montse", handle: "montse", score: 8220, profile_handle: "montse" },
+      ],
+      "id-montse",
+    );
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0]?.handle, "jaime32");
+    assert.equal(rows[0]?.isYou, false);
+    assert.equal(rows[0]?.score, 13760);
+    assert.equal(rows[1]?.handle, "montse");
+    assert.equal(rows[1]?.isYou, true);
+    assert.equal(rows[1]?.score, 8220);
+  });
+
+  it("does not paint the owner's name on someone else's row", () => {
+    const rows = mapBoardRows(
+      [
+        { user_id: "id-jaime", handle: "Jaime Martínez Lafargue", score: 13760, profile_handle: "jaime32" },
+        { user_id: "id-montse", handle: "Montse Ferrando", score: 8220, profile_handle: "montseF" },
+      ],
+      "id-jaime",
+    );
+    assert.equal(rows[0]?.handle, "jaime32");
+    assert.equal(rows[1]?.handle, "montseF");
+    assert.equal(rows[1]?.isYou, false);
+  });
+});
+
+describe("visibleBoard two players", () => {
+  it("never drops the other player when injecting a local mark", () => {
+    const rows = visibleBoard(
+      [
+        { handle: "jaime32", score: 13760, isYou: false },
+        { handle: "montseF", score: 8220, isYou: false },
+      ],
+      9000,
+      true,
+      { youHandle: "ana" },
+    );
+    assert.equal(rows.length, 3);
+    assert.ok(rows.some((r) => r.handle === "jaime32" && r.score === 13760));
+    assert.ok(rows.some((r) => r.handle === "montseF" && r.score === 8220));
   });
 });
 
