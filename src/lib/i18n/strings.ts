@@ -220,7 +220,7 @@ const es: Messages = {
   comboHowAcorde: "Tres en cruz.",
   comboHowHalo: "Cuatro en cruz.",
   comboHowIris: "Cinco en cruz. El toque más gordo.",
-  comboHowMira: "Al caer, cuatro o más iguales en fila o columna.",
+  comboHowMira: "Cuatro en línea al caer. Lo que entra nuevo no lo cierra.",
   glyphsTitle: "Los signos del diario",
   glyphsIntro: "Al terminar ves 12 signos: un pulso cada uno, de izquierda a derecha.",
   glyphsCompact: "Cada signo es un pulso, de izquierda a derecha.",
