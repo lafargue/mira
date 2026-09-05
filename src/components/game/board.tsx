@@ -181,7 +181,7 @@ export function ComboGuide() {
     <div>
       <h3 className="font-medium text-fg">Las jugadas</h3>
       <p className="mt-1 text-sm leading-relaxed text-muted">
-        Los puntos son fichas × fichas × 10. No puede haber cuatro en línea al tocar: eso ya habría estallado al caer (Mira). El toque más gordo es cinco.
+        Los puntos son fichas × fichas × 10. El Mira es cuatro en línea al caer — de lo que ya estaba o de un muro que pintaste. Las fichas nuevas no lo cierran. El toque más gordo es cinco.
       </p>
       <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-surface">
         {COMBO_GUIDE.map((c) => (

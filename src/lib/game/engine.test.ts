@@ -9,13 +9,16 @@ import {
   applyPulse,
   comboName,
   createGame,
+  evaluateTap,
   findCascadeRuns,
   harvestFrom,
   harvestScore,
+  legalSpawnColors,
   nextColor,
   pressureDelta,
   pulse,
   pulseGlyph,
+  runIfPlaced,
   type Board,
   type Tile,
 } from "./engine.ts";
@@ -170,6 +173,82 @@ describe("pulse + gravity", () => {
     }
     assert.equal(game.over, true);
     assert.ok(game.pressure >= PRESSURE_MAX - 1);
+  });
+});
+
+describe("the sky cannot close a Mira", () => {
+  it("refuses the color that would complete a 4 at a hole", () => {
+    const b = boardFrom([
+      [0, 0, 0, 1, 1, 2],
+      [1, 2, 1, 2, 0, 1],
+      [2, 1, 2, 1, 2, 0],
+      [1, 2, 0, 2, 1, 2],
+      [2, 0, 1, 0, 2, 1],
+      [0, 1, 2, 1, 0, 2],
+    ]);
+    b[0][3] = null;
+    assert.equal(runIfPlaced(b, 0, 3, 0), 4);
+    assert.ok(runIfPlaced(b, 0, 3, 1) < CASCADE_RUN);
+    assert.ok(runIfPlaced(b, 0, 3, 2) < CASCADE_RUN);
+    const legal = legalSpawnColors(b, 0, 3);
+    assert.ok(!legal.includes(0));
+    assert.ok(legal.includes(1));
+    assert.ok(legal.includes(2));
+  });
+
+  it("a wall you paint into a 3-line is still a Mira", () => {
+    const board = boardFrom([
+      [1, 2, 1, 2, 1, 2],
+      [2, 1, 2, 1, 2, 1],
+      [0, 0, 0, 2, 1, 2],
+      [1, 2, 1, 0, 2, 0],
+      [2, 0, 2, 1, 0, 1],
+      [0, 1, 0, 2, 1, 2],
+    ]);
+    const game = { ...createGame("endless", 1), board, nextId: 80, rngState: 1 };
+    const result = pulse(game, 2, 4);
+    assert.ok(result.cascades.length > 0, "evolving the 2 into 0 must fire a Mira");
+    assert.equal(result.comboName, "Mira");
+    const miraTiles = result.cascades[0]!.harvested;
+    assert.ok(miraTiles.length >= CASCADE_RUN);
+    assert.ok(miraTiles.every((h) => h.color === 0));
+  });
+
+  it("a tap that only opens a hole next to three matching tiles is not a Mira", () => {
+    const board = boardFrom([
+      [0, 0, 0, 1, 2, 1],
+      [1, 2, 1, 2, 0, 2],
+      [2, 1, 2, 0, 1, 0],
+      [1, 2, 0, 1, 2, 1],
+      [2, 0, 1, 2, 0, 2],
+      [0, 1, 2, 0, 1, 0],
+    ]);
+    const game = { ...createGame("endless", 1), board, nextId: 80, rngState: 99 };
+    const result = pulse(game, 5, 3);
+    assert.equal(result.cascades.length, 0, "sky fill must not close the 0 0 0 _ line");
+    assert.notEqual(result.comboName, "Mira");
+    assert.equal(findCascadeRuns(result.board).length, 0);
+    if (result.board[0][3]) {
+      assert.notEqual(result.board[0][3]!.color, 0);
+    }
+  });
+
+  it("every Mira pulse matches evaluateTap (no lucky sky chain)", () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      let game = createGame("endless", seed * 31);
+      for (let i = 0; i < 8; i++) {
+        const r = i % SIZE;
+        const c = (i * 3) % SIZE;
+        const expected = evaluateTap(game.board, r, c);
+        const result = pulse(game, r, c);
+        if (result.harvested.length === 0) continue;
+        const gotMira = result.cascades.length > 0;
+        const wantMira = expected.mira > 0;
+        assert.equal(gotMira, wantMira, `seed ${seed} tap ${r},${c}`);
+        game = applyPulse(game, result);
+        if (game.over) break;
+      }
+    }
   });
 });
 

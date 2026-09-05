@@ -216,11 +216,9 @@ export function MiraApp() {
         }
 
         setPopping(new Set());
-        setSpawning(new Set(result.spawns.map((s) => s.id)));
         setGame((g) => (g ? { ...g, board: result.boardAfterTap } : g));
         setPreview(null);
         await pause(240);
-        setSpawning(new Set());
 
         for (const step of result.cascades) {
           setPopping(new Set(step.harvested.map((h) => h.id)));
@@ -230,11 +228,14 @@ export function MiraApp() {
           setTimeout(() => setShake(false), 280);
           await pause(200);
           setPopping(new Set());
-          setSpawning(new Set(step.spawns.map((s) => s.id)));
           setGame((g) => (g ? { ...g, board: step.board } : g));
           await pause(220);
-          setSpawning(new Set());
         }
+
+        setSpawning(new Set(result.spawns.map((s) => s.id)));
+        setGame((g) => (g ? { ...g, board: result.board } : g));
+        await pause(240);
+        setSpawning(new Set());
 
         const next = applyPulse(game, result);
         const nextGlyphs = [...glyphs, pulseGlyph(result)];

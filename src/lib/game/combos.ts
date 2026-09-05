@@ -18,7 +18,7 @@ export const COMBO_GUIDE: ComboGuide[] = [
   { name: "Iris", how: "Cinco en cruz. El toque más gordo.", pts: String(harvestScore(5, 1)) },
   {
     name: "Mira",
-    how: "Al caer, cuatro o más iguales en fila o columna.",
+    how: "Cuatro en línea al caer. Lo que entra nuevo no lo cierra.",
     pts: `×2 · ${harvestScore(4, 2)}+`,
   },
 ];

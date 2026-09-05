@@ -204,12 +204,57 @@ function applyGravity(board: Board): Fall[] {
   return falls;
 }
 
+function lineSpan(board: Board, r: number, c: number, color: Color, dr: number, dc: number): number {
+  let n = 0;
+  let nr = r + dr;
+  let nc = c + dc;
+  while (inBounds(nr, nc) && board[nr][nc]?.color === color) {
+    n += 1;
+    nr += dr;
+    nc += dc;
+  }
+  return n;
+}
+
+/** Longest line through (r,c) if that empty cell were `color`. */
+export function runIfPlaced(board: Board, r: number, c: number, color: Color): number {
+  const horiz = 1 + lineSpan(board, r, c, color, 0, -1) + lineSpan(board, r, c, color, 0, 1);
+  const vert = 1 + lineSpan(board, r, c, color, -1, 0) + lineSpan(board, r, c, color, 1, 0);
+  return Math.max(horiz, vert);
+}
+
+/** Colors that can spawn here without making a Mira. Empty if every color would. */
+export function legalSpawnColors(board: Board, r: number, c: number): Color[] {
+  const ok: Color[] = [];
+  for (let k = 0; k < COLOR_COUNT; k++) {
+    const color = k as Color;
+    if (runIfPlaced(board, r, c, color) < CASCADE_RUN) ok.push(color);
+  }
+  return ok;
+}
+
+function pickSpawnColor(board: Board, r: number, c: number, rng: Rng): Color {
+  const ok = legalSpawnColors(board, r, c);
+  if (ok.length > 0) return ok[Math.floor(rng.next() * ok.length)]!;
+  let best: Color = 0;
+  let bestRun = 99;
+  for (let k = 0; k < COLOR_COUNT; k++) {
+    const color = k as Color;
+    const run = runIfPlaced(board, r, c, color);
+    if (run < bestRun) {
+      bestRun = run;
+      best = color;
+    }
+  }
+  return best;
+}
+
 function refill(board: Board, rng: Rng, nextIdRef: { n: number }): Spawn[] {
   const spawns: Spawn[] = [];
   for (let c = 0; c < SIZE; c++) {
     for (let r = 0; r < SIZE; r++) {
       if (!board[r][c]) {
-        const color = rng.color();
+        const color = pickSpawnColor(board, r, c, rng);
         const tile: Tile = { id: nextIdRef.n++, color };
         board[r][c] = tile;
         spawns.push({ r, c, id: tile.id, color });
@@ -295,7 +340,6 @@ export function pulse(state: GameState, row: number, col: number): PulseResult {
   }
 
   const falls = applyGravity(board);
-  const spawns = refill(board, rng, nextIdRef);
   const boardAfterTap = cloneBoard(board);
 
   const cascades: CascadeStep[] = [];
@@ -309,16 +353,17 @@ export function pulse(state: GameState, row: number, col: number): PulseResult {
       if (board[h.r][h.c]?.id === h.id) board[h.r][h.c] = null;
     }
     const cFalls = applyGravity(board);
-    const cSpawns = refill(board, rng, nextIdRef);
     cascades.push({
       harvested: run,
       falls: cFalls,
-      spawns: cSpawns,
+      spawns: [],
       chain,
       score: harvestScore(run.length, chain),
       board: cloneBoard(board),
     });
   }
+
+  const spawns = refill(board, rng, nextIdRef);
 
   const tapScore = harvestScore(harvested.length, 1);
   const cascadeScore = cascades.reduce((s, c) => s + c.score, 0);
